@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap">
 <style>
-/* Layout: one-column phone app — sticky month bar, scrolling view, fixed tab bar with the add button in its centre */
+/* Layout: one-column phone app — sticky month bar with currency switch, scrolling view, fixed tab bar with the add button in its centre */
 :root{
   --bg:#F2F5F4; --surface:#FFFFFF; --surface-2:#E8EEEC; --ink:#121716; --muted:#5A6664; --line:#DAE1DF;
   --accent:#0B7A75; --accent-ink:#FFFFFF; --accent-soft:#D6EDEA;
@@ -46,20 +46,24 @@ button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 h1,h2,h3{text-wrap:balance}
+a{color:var(--accent)}
 .wrap{max-width:560px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 
 /* top bar */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg)}
 .top-in{display:flex;align-items:center;gap:8px;padding-block:8px}
 .mnav{display:flex;align-items:center;gap:2px;flex:1;min-width:0}
-.mnav.off{visibility:hidden}
 .icon-btn{width:44px;height:44px;flex:none;border:0;border-radius:12px;background:transparent;display:grid;place-items:center}
 .icon-btn:hover{background:var(--surface-2)}
 .icon-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .m-label{border:0;background:none;font-family:var(--font-display);font-weight:600;font-size:clamp(15px,4.4vw,18px);letter-spacing:-.01em;padding:6px 4px;border-radius:10px;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
-.sync{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--muted);padding:5px 10px;border-radius:999px;background:var(--surface-2);white-space:nowrap;flex:none}
-.sync i{width:7px;height:7px;border-radius:50%;background:var(--muted)}
-.sync.ok i{background:var(--good)}.sync.warn i{background:var(--warn)}.sync.bad i{background:var(--bad)}
+.cur-wrap{position:relative;flex:none}
+.cur-btn{min-width:44px;height:44px;padding:0 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-family:var(--font-display);font-weight:600;font-size:16px}
+.cur-menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:210px;z-index:25}
+.cur-menu button{display:flex;gap:8px;align-items:center;border:0;background:none;border-radius:9px;padding:9px 10px;text-align:left;font-weight:600;font-size:14px;min-height:42px}
+.cur-menu button:hover{background:var(--surface-2)}
+.cur-menu button.on{color:var(--accent);font-weight:800}
+.cur-menu b{font-family:var(--font-display);font-weight:600;min-width:38px}
 
 main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 .view{display:flex;flex-direction:column;gap:14px}
@@ -68,7 +72,7 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 .sec{font-size:12.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:10px 0 -4px;font-weight:700}
 
 /* buttons */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:14.5px;text-align:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:14.5px;text-align:center;cursor:pointer}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 .btn.danger{color:var(--bad)}
 .btn.ghost{background:transparent}
@@ -78,14 +82,21 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 .link{border:0;background:none;padding:0;color:var(--accent);font-weight:700;text-align:left;text-decoration:underline;text-underline-offset:3px}
 
 /* cards */
-.card{background:var(--surface);border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;gap:10px}
 .note{background:var(--accent-soft);border-radius:var(--r-md);padding:12px 14px;font-size:13.5px;margin:0}
+.note.bad{background:transparent;border:1.5px solid var(--bad);color:var(--bad);font-weight:700}
 .prose p,.prose li{font-size:14px;max-width:65ch;margin:0}
 .prose ol,.prose ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
-.prose code{font-family:var(--font-body);font-weight:700;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.explain summary{font-weight:800;cursor:pointer;list-style-position:inside}
 .welcome{background:var(--surface);border:1.5px solid var(--accent);border-radius:var(--r-lg);padding:16px;display:flex;flex-direction:column;gap:10px}
 .welcome h2{margin:0;font-family:var(--font-display);font-size:17px;font-weight:600}
 .demo-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border:1.5px dashed var(--warn);border-radius:var(--r-md);padding:8px 8px 8px 14px;font-size:13.5px;font-weight:700;color:var(--warn)}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.src-top{display:flex;justify-content:space-between;align-items:baseline;gap:6px 10px;flex-wrap:wrap}
+.src-top b{font-size:15.5px;font-weight:800;overflow-wrap:anywhere}
+.form-title{margin:0;font-size:16px;font-weight:800}
+.check{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:700;font-size:14.5px;cursor:pointer}
+.check input{width:22px;height:22px;accent-color:var(--accent);margin:0;flex:none}
 
 /* month totals */
 .totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -102,6 +113,7 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 .meter.warn>i{background:var(--warn)}.meter.bad>i{background:var(--bad)}
 .meter>b{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--ink);border-radius:1px}
 .bgt-sub{font-size:12.5px;color:var(--muted)}
+.sal-line{background:var(--surface);border-radius:var(--r-md);padding:10px 12px;font-size:13.5px;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
 
 /* calendar */
 .cal{background:var(--surface);border-radius:var(--r-lg);padding:10px;touch-action:pan-y}
@@ -119,15 +131,12 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 .dn{font-size:13px;font-weight:800;line-height:1.1}
 .amt{font-size:10.5px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
 .incdot{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--inc);box-shadow:0 0 0 1.5px var(--surface)}
+.plandot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;border:1.5px solid var(--inc);background:var(--surface)}
 .cal-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:8px;padding-inline:2px}
 .heat{display:inline-flex;gap:2px;vertical-align:-2px;margin-right:6px}
 .heat i{width:10px;height:10px;border-radius:3px;background:var(--exp)}
 .dot-inc{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--inc);margin-right:6px}
 .dot-plan{display:inline-block;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--inc);margin-right:6px}
-.plandot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;border:1.5px solid var(--inc);background:var(--surface)}
-.sal-line{background:var(--surface);border-radius:var(--r-md);padding:10px 12px;font-size:13.5px;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
-.seg.two{grid-auto-flow:row;grid-template-columns:1fr 1fr}
-.kpis>.kpi:last-child:nth-child(odd){grid-column:1/-1}
 
 /* day list */
 .day{display:flex;flex-direction:column;gap:8px}
@@ -154,6 +163,7 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 .hero-num.neg{color:var(--bad)}
 .hero-sub{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13.5px;color:var(--muted);font-weight:600}
 .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.kpis>.kpi:last-child:nth-child(odd){grid-column:1/-1}
 .kpi{background:var(--surface);border-radius:var(--r-md);padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .kpi-name{font-size:13px;font-weight:700;line-height:1.25}
 .kpi-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px}
@@ -184,10 +194,11 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 .chart-cap b{font-weight:800}
 .save-box{background:var(--surface);border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;gap:12px}
 .save-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
-.save-row b{font-family:var(--font-display);font-weight:600;font-size:18px;font-variant-numeric:tabular-nums}
+.save-row b{font-family:var(--font-display);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
 
 /* places */
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--surface-2);border-radius:12px;padding:3px;gap:3px}
+.seg.two{grid-auto-flow:row;grid-template-columns:1fr 1fr}
 .seg button{border:0;background:transparent;border-radius:9px;min-height:38px;font-weight:700;font-size:13.5px;color:var(--muted);padding:0 6px}
 .seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.1)}
 .places{display:flex;flex-direction:column;gap:8px;list-style:none;margin:0;padding:0}
@@ -204,7 +215,7 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 .maplinks a{color:var(--accent);font-weight:700;text-decoration:none;border:1px solid var(--line);border-radius:10px;padding:7px 11px;font-size:13px}
 .coords{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 
-/* settings */
+/* forms */
 .form{display:flex;flex-direction:column;gap:12px}
 .field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .field input,.field select{min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:0 12px;width:100%;min-width:0;font-size:16px}
@@ -216,7 +227,7 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 /* tab bar */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--line);padding-top:4px;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .tabs-in{max-width:528px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 76px 1fr 1fr;align-items:center}
-.tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:700;color:var(--muted);min-height:52px;border-radius:12px}
+.tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:700;color:var(--muted);min-height:54px;border-radius:12px;line-height:1.1;text-align:center}
 .tab svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tab.on{color:var(--accent)}
 .fab{justify-self:center;width:60px;height:60px;border-radius:20px;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;box-shadow:var(--shadow);transform:translateY(-16px)}
@@ -261,7 +272,10 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
       <button class="m-label" id="mLabel" title="Вернуться к текущему месяцу">Месяц</button>
       <button class="icon-btn" id="mNext" aria-label="Следующий месяц"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
-    <span class="sync warn" id="sync" title="Где хранятся записи"><i></i><span>Связь…</span></span>
+    <div class="cur-wrap">
+      <button class="cur-btn" id="curBtn" type="button" aria-haspopup="true" aria-expanded="false" title="Валюта"><span id="curSym">₽</span></button>
+      <div class="cur-menu" id="curMenu" role="menu" hidden></div>
+    </div>
   </div>
 </header>
 
@@ -270,13 +284,13 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 
   <!-- КАЛЕНДАРЬ -->
   <section id="v-cal" class="view" data-view="cal">
+    <p class="note bad" id="netNote" hidden>Нет связи с облаком: новые записи могут не сохраниться. Проверьте интернет.</p>
     <div id="welcome" class="welcome" hidden>
       <h2>Первая запись за пять секунд</h2>
       <div class="prose"><ol>
         <li>Нажмите круглую кнопку <b>+</b> внизу.</li>
         <li>Введите сумму и выберите категорию. Место и GPS необязательны.</li>
-        <li>Записывайте и доходы: без них не посчитать норму сбережений.</li>
-        <li>Платят по графику (за день, раз в полмесяца или раз в месяц)? Укажите это во вкладке «Ещё», и зарплата будет записываться сама.</li>
+        <li>Платят по графику? Добавьте источник дохода во вкладке «Доходы и хобби»: выплаты будут записываться сами.</li>
       </ol></div>
       <div class="btn-row"><button class="btn" id="demoOn" type="button">Посмотреть на примере</button></div>
     </div>
@@ -286,7 +300,7 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
       <div class="tot"><span class="lbl">Остаток</span><b id="cBal">—</b></div>
     </div>
     <div id="budgetBox"></div>
-    <div id="salLine"></div>
+    <div id="incLine"></div>
     <div class="cal" id="calBox">
       <div class="wd"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
       <div class="grid" id="calGrid"></div>
@@ -318,8 +332,125 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
     <div class="cats" id="cats"></div>
     <h3 class="sec">Полгода: доходы и расходы</h3>
     <div class="chart" id="trend"></div>
-    <h3 class="sec">Накопления</h3>
+    <h3 class="sec" id="savSec">Накопления</h3>
     <div class="save-box" id="savings"></div>
+    <details class="card prose explain">
+      <summary>Как считаются коэффициенты</summary>
+      <p>Обозначения: <b>Д</b> — доходы за месяц, <b>Р</b> — расходы за месяц, <b>Р<sub>о</sub></b> — обязательные траты (продукты, жильё, транспорт, связь, здоровье, учёба), <b>Р<sub>н</sub></b> — остальные, <b>Б</b> — бюджет месяца, <b>d</b> — прошедшие дни месяца, <b>N</b> — дней в месяце, <b>Н</b> — накопления. Все суммы в выбранной валюте.</p>
+      <ul>
+        <li><b>Норма сбережений</b> = (Д − Р) / Д. Ориентир 20 % и выше, по правилу 50/30/20 (Э. Уоррен, А. Уоррен-Тьяги, «All Your Worth», 2005).</li>
+        <li><b>Коэффициент трат</b> = Р / Д. Больше 1 — тратите больше, чем зарабатываете.</li>
+        <li><b>Обязательные / доход</b> = Р<sub>о</sub> / Д, ориентир до 50 %. <b>Необязательные / доход</b> = Р<sub>н</sub> / Д, ориентир до 30 %.</li>
+        <li><b>Темп трат</b> = (Р / d) / (Б / N). 1,0 — идёте ровно по бюджету, 1,2 — тратите на 20 % быстрее плана.</li>
+        <li><b>Прогноз на месяц</b> = Р / d × N — если тратить дальше в том же темпе.</li>
+        <li><b>Ожидаемый доход</b> = полученные доходы месяца + выплаты по графику источников, которые ещё впереди. <b>Прогноз нормы сбережений</b> = (ожидаемый доход − прогноз расходов) / ожидаемый доход; для будущего месяца вместо прогноза расходов берётся бюджет.</li>
+        <li><b>Финансовая подушка</b> = Н / средние расходы за 3 прошлых месяца, в месяцах. Распространённый ориентир — 3–6 месяцев.</li>
+      </ul>
+      <p class="muted">Пример: Д = 80 000, Р = 62 000. Норма сбережений = (80 000 − 62 000) / 80 000 = 0,225 = 22,5 %; коэффициент трат = 62 000 / 80 000 = 0,775.</p>
+    </details>
+  </section>
+
+  <!-- ДОХОДЫ И ХОББИ -->
+  <section id="v-inc" class="view" data-view="inc" hidden>
+    <div class="hero">
+      <span class="lbl" id="iHeroLbl">Доходы за месяц</span>
+      <div class="hero-num" id="iHero">—</div>
+      <div class="hero-sub" id="iHeroSub"></div>
+    </div>
+
+    <h3 class="sec">Источники дохода</h3>
+    <ul class="list" id="srcList"></ul>
+    <button class="btn" id="srcAdd" type="button">Добавить источник дохода</button>
+    <form class="card form" id="srcForm" novalidate hidden>
+      <h3 class="form-title" id="srcFormTitle">Новый источник дохода</h3>
+      <label class="field"><span class="lbl">Название</span><input id="srcName" maxlength="40" placeholder="Например, основная работа" autocomplete="off"></label>
+      <div class="field"><span class="lbl">Вид дохода</span><div class="chips" id="srcCats"></div></div>
+      <div class="field"><span class="lbl">Режим выплат</span>
+        <div class="seg two" id="srcMode">
+          <button type="button" data-srcmode="daily">Подневная</button>
+          <button type="button" data-srcmode="semi">Раз в полмесяца</button>
+          <button type="button" data-srcmode="monthly">Раз в месяц</button>
+          <button type="button" data-srcmode="custom">Настраиваемый</button>
+        </div>
+      </div>
+      <div class="form" id="mDaily" hidden>
+        <label class="field"><span class="lbl">Оплата за рабочий день</span><input id="srcRate" inputmode="decimal" placeholder="Например, 3 000" autocomplete="off"></label>
+        <div class="field"><span class="lbl">Рабочие дни</span><div class="chips" id="srcDays"></div></div>
+      </div>
+      <div class="form" id="mSemi" hidden>
+        <div class="row2">
+          <label class="field"><span class="lbl">Аванс, сумма</span><input id="srcA1" inputmode="decimal" placeholder="Например, 40 000" autocomplete="off"></label>
+          <label class="field"><span class="lbl">День аванса</span><input id="srcD1" type="number" min="1" max="31" inputmode="numeric"></label>
+        </div>
+        <div class="row2">
+          <label class="field"><span class="lbl">Расчёт, сумма</span><input id="srcA2" inputmode="decimal" placeholder="Например, 45 000" autocomplete="off"></label>
+          <label class="field"><span class="lbl">День расчёта</span><input id="srcD2" type="number" min="1" max="31" inputmode="numeric"></label>
+        </div>
+      </div>
+      <div class="form" id="mMonthly" hidden>
+        <div class="row2">
+          <label class="field"><span class="lbl">Сумма</span><input id="srcAmount" inputmode="decimal" placeholder="Например, 85 000" autocomplete="off"></label>
+          <label class="field"><span class="lbl">День выплаты</span><input id="srcDay" type="number" min="1" max="31" inputmode="numeric"></label>
+        </div>
+      </div>
+      <div class="form" id="mCustom" hidden>
+        <div class="seg" id="srcKind"><button type="button" data-kind="interval">Через промежуток</button><button type="button" data-kind="dates">По числам месяца</button></div>
+        <label class="field"><span class="lbl">Сумма одной выплаты</span><input id="srcCAmount" inputmode="decimal" placeholder="Например, 20 000" autocomplete="off"></label>
+        <div class="row2" id="kInterval">
+          <label class="field"><span class="lbl">Дата одной из выплат</span><input id="srcAnchor" type="date"></label>
+          <label class="field"><span class="lbl">Промежуток, дней</span><input id="srcEvery" type="number" min="1" max="366" inputmode="numeric" placeholder="14"></label>
+        </div>
+        <label class="field" id="kDates"><span class="lbl">Числа месяца через запятую</span><input id="srcDates" inputmode="decimal" placeholder="Например, 10, 25" autocomplete="off"></label>
+      </div>
+      <label class="field"><span class="lbl">Записывать выплаты начиная с</span><input type="date" id="srcStart"></label>
+      <p class="hint" id="srcHint" style="margin:0"></p>
+      <p class="err" id="srcErr" hidden></p>
+      <div class="btn-row">
+        <button type="submit" class="btn primary">Сохранить</button>
+        <button type="button" class="btn ghost" id="srcCancel">Отмена</button>
+        <button type="button" class="btn danger ghost" id="srcDelete" hidden>Удалить источник</button>
+      </div>
+    </form>
+
+    <h3 class="sec">Бюджет и накопления</h3>
+    <form class="card form" id="planForm" novalidate>
+      <label class="check"><input type="checkbox" id="budOn"><span>Бюджет расходов на месяц</span></label>
+      <label class="field" id="budWrap" hidden><span class="lbl">Сумма бюджета</span><input id="sBudget" inputmode="decimal" placeholder="Например, 45 000" autocomplete="off"></label>
+      <label class="check"><input type="checkbox" id="savOn"><span>Учитывать накопления</span></label>
+      <div class="row2" id="savWrap" hidden>
+        <label class="field"><span class="lbl">Накоплено до учёта</span><input id="sStart" inputmode="decimal" placeholder="0" autocomplete="off"></label>
+        <label class="field"><span class="lbl">Цель</span><input id="sGoal" inputmode="decimal" placeholder="300 000" autocomplete="off"></label>
+      </div>
+      <p class="err" id="planErr" hidden></p>
+      <button class="btn primary" type="submit" id="planSave">Сохранить суммы</button>
+    </form>
+
+    <h3 class="sec">Хобби</h3>
+    <ul class="list" id="hobbyList"></ul>
+    <form class="card form" id="hobbyForm" novalidate>
+      <h3 class="form-title" id="hobbyFormTitle">Новое хобби</h3>
+      <div class="row2">
+        <label class="field"><span class="lbl">Название</span><input id="hobbyName" maxlength="40" placeholder="Например, рыбалка" autocomplete="off"></label>
+        <label class="field"><span class="lbl">Лимит в месяц</span><input id="hobbyLimit" inputmode="decimal" placeholder="Необязательно" autocomplete="off"></label>
+      </div>
+      <p class="err" id="hobbyErr" hidden></p>
+      <div class="btn-row">
+        <button type="submit" class="btn primary" id="hobbySave">Добавить хобби</button>
+        <button type="button" class="btn ghost" id="hobbyCancel" hidden>Отмена</button>
+        <button type="button" class="btn danger ghost" id="hobbyDelete" hidden>Удалить хобби</button>
+      </div>
+    </form>
+
+    <h3 class="sec">Копия данных</h3>
+    <div class="card">
+      <p class="prose" id="storeInfo" style="margin:0"></p>
+      <div class="btn-row">
+        <button class="btn small" id="expJson" type="button">Скачать копию</button>
+        <button class="btn small" id="expCsv" type="button">Таблица CSV</button>
+        <label class="btn small" for="impFile">Загрузить копию</label>
+        <input type="file" id="impFile" accept=".json,application/json" hidden>
+      </div>
+    </div>
   </section>
 
   <!-- МЕСТА -->
@@ -330,85 +461,6 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
     <div class="pl-stats" id="placeStats"></div>
     <ul class="places" id="placeList"></ul>
   </section>
-
-  <!-- ЕЩЁ -->
-  <section id="v-more" class="view" data-view="more" hidden>
-    <h3 class="sec">Зарплата</h3>
-    <form class="card form" id="salForm" novalidate>
-      <div class="seg two" id="salMode">
-        <button type="button" data-salmode="none">Не учитывать</button>
-        <button type="button" data-salmode="daily">Подневная</button>
-        <button type="button" data-salmode="semi">Раз в полмесяца</button>
-        <button type="button" data-salmode="monthly">Раз в месяц</button>
-      </div>
-      <div class="form" id="salDaily" hidden>
-        <label class="field"><span class="lbl">Оплата за рабочий день</span><input id="salRate" inputmode="decimal" placeholder="Например, 3 000" autocomplete="off"></label>
-        <div class="field"><span class="lbl">Рабочие дни</span><div class="chips" id="salDays"></div></div>
-      </div>
-      <div class="form" id="salSemi" hidden>
-        <div class="row2">
-          <label class="field"><span class="lbl">Аванс, сумма</span><input id="salA1" inputmode="decimal" placeholder="Например, 40 000" autocomplete="off"></label>
-          <label class="field"><span class="lbl">День аванса</span><input id="salD1" type="number" min="1" max="31" inputmode="numeric"></label>
-        </div>
-        <div class="row2">
-          <label class="field"><span class="lbl">Зарплата, сумма</span><input id="salA2" inputmode="decimal" placeholder="Например, 45 000" autocomplete="off"></label>
-          <label class="field"><span class="lbl">День зарплаты</span><input id="salD2" type="number" min="1" max="31" inputmode="numeric"></label>
-        </div>
-      </div>
-      <div class="form" id="salMonthly" hidden>
-        <div class="row2">
-          <label class="field"><span class="lbl">Сумма зарплаты</span><input id="salAmount" inputmode="decimal" placeholder="Например, 85 000" autocomplete="off"></label>
-          <label class="field"><span class="lbl">День выплаты</span><input id="salDay" type="number" min="1" max="31" inputmode="numeric"></label>
-        </div>
-      </div>
-      <label class="field" id="salStartWrap"><span class="lbl">Записывать выплаты начиная с</span><input type="date" id="salStart"></label>
-      <p class="hint" id="salHint" style="margin:0"></p>
-      <p class="err" id="salErr" hidden></p>
-      <button class="btn primary" type="submit">Сохранить график</button>
-    </form>
-
-    <h3 class="sec">Настройки</h3>
-    <form class="card form" id="setForm" novalidate>
-      <label class="field"><span class="lbl">Валюта</span>
-        <select id="sCur"><option value="₽">₽ рубль</option><option value="$">$ доллар</option><option value="€">€ евро</option><option value="₸">₸ тенге</option><option value="Br">Br бел. рубль</option><option value="֏">֏ драм</option><option value="₴">₴ гривна</option><option value="сўм">сўм сум</option><option value="₾">₾ лари</option></select>
-      </label>
-      <label class="field"><span class="lbl">Бюджет расходов на месяц</span><input id="sBudget" inputmode="decimal" placeholder="Например, 45 000" autocomplete="off"></label>
-      <label class="field"><span class="lbl">Цель накоплений</span><input id="sGoal" inputmode="decimal" placeholder="Например, 300 000" autocomplete="off"></label>
-      <label class="field"><span class="lbl">Накоплено до начала учёта</span><input id="sStart" inputmode="decimal" placeholder="0" autocomplete="off"></label>
-      <p class="err" id="setErr" hidden></p>
-      <button class="btn primary" type="submit">Сохранить настройки</button>
-    </form>
-
-    <h3 class="sec">Данные</h3>
-    <div class="card">
-      <p class="prose" id="storeInfo" style="margin:0"></p>
-      <div class="btn-row">
-        <button class="btn" id="expJson" type="button">Скачать копию (JSON)</button>
-        <button class="btn" id="expCsv" type="button">Таблица для Excel (CSV)</button>
-        <label class="btn" for="impFile">Загрузить копию</label>
-        <input type="file" id="impFile" accept=".json,application/json" hidden>
-      </div>
-      <button class="btn danger ghost" id="clearAll" type="button">Удалить все записи</button>
-    </div>
-
-    <h3 class="sec">Как поставить на телефон</h3>
-    <div class="card prose" id="installInfo"></div>
-
-    <h3 class="sec">Как считаются коэффициенты</h3>
-    <div class="card prose">
-      <p>Обозначения: <b>Д</b> — доходы за месяц, <b>Р</b> — расходы за месяц, <b>Р<sub>о</sub></b> — обязательные траты (продукты, жильё, транспорт, связь, здоровье, учёба), <b>Р<sub>н</sub></b> — остальные, <b>Б</b> — бюджет месяца, <b>d</b> — прошедшие дни месяца, <b>N</b> — дней в месяце, <b>Н</b> — накопления. Все суммы в выбранной валюте.</p>
-      <ul>
-        <li><b>Норма сбережений</b> = (Д − Р) / Д. Ориентир 20 % и выше, по правилу 50/30/20 (Э. Уоррен, А. Уоррен-Тьяги, «All Your Worth», 2005).</li>
-        <li><b>Коэффициент трат</b> = Р / Д. Больше 1 — тратите больше, чем зарабатываете.</li>
-        <li><b>Обязательные / доход</b> = Р<sub>о</sub> / Д, ориентир до 50 %. <b>Необязательные / доход</b> = Р<sub>н</sub> / Д, ориентир до 30 %.</li>
-        <li><b>Темп трат</b> = (Р / d) / (Б / N). 1,0 — идёте ровно по бюджету, 1,2 — тратите на 20 % быстрее плана.</li>
-        <li><b>Прогноз на месяц</b> = Р / d × N — если тратить дальше в том же темпе.</li>
-        <li><b>Финансовая подушка</b> = Н / средние расходы за 3 прошлых месяца, в месяцах. Распространённый ориентир — 3–6 месяцев.</li>
-        <li><b>Ожидаемый доход</b> = уже полученные доходы месяца + выплаты по графику зарплаты, которые ещё впереди. <b>Прогноз нормы сбережений</b> = (ожидаемый доход − прогноз расходов) / ожидаемый доход. Для будущего месяца вместо прогноза расходов берётся бюджет.</li>
-      </ul>
-      <p class="muted">Пример: Д = 80 000, Р = 62 000. Норма сбережений = (80 000 − 62 000) / 80 000 = 0,225 = 22,5 %; коэффициент трат = 62 000 / 80 000 = 0,775.</p>
-    </div>
-  </section>
 </main>
 
 <nav class="tabs" aria-label="Разделы">
@@ -416,8 +468,8 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
     <button class="tab" data-tab="cal" type="button"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Календарь</button>
     <button class="tab" data-tab="sum" type="button"><svg viewBox="0 0 24 24"><path d="M5 20v-8M12 20V5M19 20v-5"/></svg>Сводка</button>
     <button class="fab" id="fab" type="button" aria-label="Добавить запись"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button class="tab" data-tab="inc" type="button"><svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="13" rx="3"/><path d="M3.5 10h17"/><circle cx="16" cy="14.5" r="1.3"/></svg><span>Доходы<br>и хобби</span></button>
     <button class="tab" data-tab="places" type="button"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>Места</button>
-    <button class="tab" data-tab="more" type="button"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Ещё</button>
   </div>
 </nav>
 
@@ -426,13 +478,15 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
   <form class="sheet" id="txForm" novalidate role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <div class="grab" aria-hidden="true"></div>
     <div class="sheet-head"><h2 id="sheetTitle">Новая запись</h2><button type="button" class="btn small ghost" data-close>Закрыть</button></div>
-    <p class="note" id="autoHint" hidden>Записано автоматически по графику зарплаты. Сумму и дату можно поправить. Если запись удалить, по графику она больше не появится.</p>
+    <p class="note" id="autoHint" hidden>Записано автоматически по графику дохода. Сумму и дату можно поправить. Если запись удалить, по графику она больше не появится.</p>
     <div class="seg" id="typeSeg"><button type="button" data-type="exp">Расход</button><button type="button" data-type="inc">Доход</button></div>
     <div class="field">
       <label class="amount" for="fAmount"><input id="fAmount" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Сумма"><span id="fCur">₽</span></label>
       <span class="hint">Можно сложить чек: 349+120+89</span>
     </div>
     <div class="field"><span class="lbl">Категория</span><div class="chips" id="fCats"></div></div>
+    <div class="field" id="srcField" hidden><span class="lbl">Источник дохода</span><div class="chips" id="fSrcs"></div></div>
+    <div class="field" id="hobbyField" hidden><span class="lbl">Хобби</span><div class="chips" id="fHobbies"></div></div>
     <div class="row2">
       <label class="field"><span class="lbl">Дата</span><input type="date" id="fDate"></label>
       <label class="field"><span class="lbl">Время</span><input type="time" id="fTime"></label>
@@ -473,6 +527,7 @@ var EXP_CATS = [
   {id:'clothes', name:'Одежда и обувь', ess:false},
   {id:'household', name:'Дом и быт', ess:false},
   {id:'fun', name:'Развлечения', ess:false},
+  {id:'hobby', name:'Хобби', ess:false},
   {id:'gifts', name:'Подарки', ess:false},
   {id:'edu', name:'Учёба', ess:true},
   {id:'other', name:'Другое', ess:false}
@@ -488,11 +543,16 @@ var INC_CATS = [
 var CAT = new Map();
 EXP_CATS.concat(INC_CATS).forEach(function (c) { CAT.set(c.id, c); });
 function cat(id) { return CAT.get(id) || {id: id, name: 'Другое', ess: false}; }
+function isIncCat(id) { return INC_CATS.some(function (c) { return c.id === id; }); }
 
 var MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 var MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 var MONTHS_SHORT = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 var WD_FULL = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+var WD_SHORT = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+var CURRENCIES = [['₽','Рубль'],['$','Доллар'],['€','Евро'],['₸','Тенге'],['Br','Белорусский рубль'],['֏','Драм'],['₴','Гривна'],['сўм','Сум'],['₾','Лари']];
+var GPS_URL = 'https://azafot.github.io/dnevnik-trat/';
+var ID_RE = /^[A-Za-z0-9_]{1,24}$/;
 
 /* ================= даты ================= */
 function pad(n) { return String(n).padStart(2, '0'); }
@@ -500,6 +560,7 @@ function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + p
 function today() { return ymd(new Date()); }
 function monthKey(s) { return s.slice(0, 7); }
 function parseDay(s) { var p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+function dayNum(s) { var p = s.split('-').map(Number); return Math.round(Date.UTC(p[0], p[1] - 1, p[2]) / 86400000); }
 function daysIn(mk) { var p = mk.split('-').map(Number); return new Date(p[0], p[1], 0).getDate(); }
 function shiftMonth(mk, k) { var p = mk.split('-').map(Number); var d = new Date(p[0], p[1] - 1 + k, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); }
 function nowTime() { var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
@@ -508,6 +569,7 @@ function monthName(mk) { return MONTHS[Number(mk.slice(5, 7)) - 1]; }
 function fmtDayLong(s) { var d = parseDay(s); return WD_FULL[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS_GEN[d.getMonth()]; }
 function fmtDayShort(s) { var d = parseDay(s); return d.getDate() + ' ' + MONTHS_GEN[d.getMonth()] + (d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : ''); }
 function elapsedIn(mk) { var cur = monthKey(today()); if (mk < cur) return daysIn(mk); if (mk > cur) return 0; return new Date().getDate(); }
+var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /* ================= числа ================= */
 var NF = new Intl.NumberFormat('ru-RU', {maximumFractionDigits: 2});
@@ -555,6 +617,9 @@ function esc(s) {
   });
 }
 function newId() { return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function shortId(prefix) { return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+function num0(v) { v = Number(v); return isFinite(v) && v >= 0 ? Math.round(v * 100) / 100 : 0; }
+function intIn(v, lo, hi, def) { v = Math.round(Number(v)); return v >= lo && v <= hi ? v : def; }
 function dist(lat1, lon1, lat2, lon2) {
   var R = 6371000, r = Math.PI / 180;
   var dLat = (lat2 - lat1) * r, dLon = (lon2 - lon1) * r;
@@ -571,8 +636,8 @@ var DEMO = null;
 function D() { return DEMO || REAL; }
 var S = {
   view: 'cal', month: monthKey(today()), selDay: today(),
-  placeScope: 'month', placeSort: 'sum', here: null, loaded: false,
-  sync: 'loading', trendSel: null, openPlaces: new Set()
+  placeScope: 'month', placeSort: 'sum', here: null, hereErr: null, loaded: false,
+  sync: 'loading', syncText: 'подключаюсь к облаку…', trendSel: null, openPlaces: new Set()
 };
 var IN_VIEWER = !!(window.claude && typeof window.claude.use === 'function');
 
@@ -580,7 +645,7 @@ var PREF_KEY = 'dnevnik-trat.prefs';
 function loadPrefs() {
   try {
     var p = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
-    if (['cal', 'sum', 'places', 'more'].indexOf(p.view) >= 0) S.view = p.view;
+    if (['cal', 'sum', 'inc', 'places'].indexOf(p.view) >= 0) S.view = p.view;
     if (['sum', 'n', 'near'].indexOf(p.placeSort) >= 0) S.placeSort = p.placeSort;
     if (['month', 'all'].indexOf(p.placeScope) >= 0) S.placeScope = p.placeScope;
   } catch (e) {}
@@ -604,8 +669,7 @@ function retryOnce(fn) {
   });
 }
 function pool(items, fn, n) {
-  var i = 0;
-  var workers = [];
+  var i = 0, workers = [];
   for (var w = 0; w < Math.min(n, items.length); w++) {
     workers.push((function next() {
       if (i >= items.length) return Promise.resolve();
@@ -644,15 +708,15 @@ var Store = {
       }
     } catch (e) { this.why = 'nostorage'; }
     S.loaded = true; setSync('local'); render();
-    setTimeout(ensureSalary, 0);
+    setTimeout(ensureIncome, 0);
   },
   ready: function () { return this.mode === 'local' || (this.mode === 'cloud' && !!this.txOk && !!this.setOk); },
   maybeReady: function () {
-    if (this.txOk && this.setOk && !this.readyFired) { this.readyFired = true; setTimeout(ensureSalary, 0); }
+    if (this.txOk && this.setOk && !this.readyFired) { this.readyFired = true; setTimeout(ensureIncome, 0); }
   },
   saveLocal: function () {
     try { localStorage.setItem(LOCAL_KEY, JSON.stringify({v: 1, tx: REAL.tx, settings: REAL.settings})); return true; }
-    catch (e) { toast('Браузер не дал сохранить данные на устройстве. Скачайте копию в разделе «Ещё».'); return false; }
+    catch (e) { toast('Браузер не дал сохранить данные на устройстве. Скачайте копию во вкладке «Доходы и хобби».'); return false; }
   },
   initCloud: function (db, uid) {
     var self = this;
@@ -698,7 +762,7 @@ var Store = {
     REAL.settings = Object.assign({}, REAL.settings, s);
     render();
     if (self.mode === 'cloud') {
-      var body = Object.assign({}, REAL.settings);
+      var body = JSON.parse(JSON.stringify(REAL.settings));
       return retryOnce(function () { return self.setRef.set(body); });
     }
     self.saveLocal();
@@ -714,17 +778,6 @@ var Store = {
     }
     var target = D().tx;
     list.forEach(function (t) { upsert(target, t); });
-    if (!DEMO) self.saveLocal();
-    render();
-    return Promise.resolve();
-  },
-  clearAll: function () {
-    var self = this;
-    if (self.mode === 'cloud' && !DEMO) {
-      var ids = REAL.tx.map(function (t) { return t.id; });
-      return pool(ids, function (id) { return retryOnce(function () { return self.txCol.doc(id).delete(); }); }, 4);
-    }
-    D().tx = [];
     if (!DEMO) self.saveLocal();
     render();
     return Promise.resolve();
@@ -744,18 +797,20 @@ function writeErr(e) {
 function cleanTx(t) {
   if (!t || typeof t !== 'object') return null;
   var amount = Math.round(Number(t.amount) * 100) / 100;
-  if (!(amount > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(t.date || '')) return null;
+  if (!(amount > 0) || !DATE_RE.test(t.date || '')) return null;
   var type = t.type === 'inc' ? 'inc' : 'exp';
   var o = {
     id: (typeof t.id === 'string' && /^[A-Za-z0-9_-]{1,60}$/.test(t.id)) ? t.id : newId(),
     type: type, amount: amount,
-    cat: (CAT.has(t.cat) && (type === 'inc') === INC_CATS.some(function (c) { return c.id === t.cat; })) ? t.cat : (type === 'inc' ? 'other_in' : 'other'),
+    cat: (CAT.has(t.cat) && (type === 'inc') === isIncCat(t.cat)) ? t.cat : (type === 'inc' ? 'other_in' : 'other'),
     date: t.date
   };
   if (/^\d{2}:\d{2}$/.test(t.time || '')) o.time = t.time;
   if (t.place) o.place = String(t.place).slice(0, 80);
   if (t.note) o.note = String(t.note).slice(0, 200);
   if (t.auto === 'salary' && type === 'inc') o.auto = 'salary';
+  if (typeof t.src === 'string' && ID_RE.test(t.src)) o.src = t.src;
+  if (typeof t.hobby === 'string' && ID_RE.test(t.hobby)) o.hobby = t.hobby;
   if (typeof t.lat === 'number' && typeof t.lon === 'number' && isFinite(t.lat) && isFinite(t.lon)) {
     o.lat = t.lat; o.lon = t.lon;
     if (typeof t.acc === 'number' && isFinite(t.acc)) o.acc = Math.round(t.acc);
@@ -771,6 +826,10 @@ function totals(list) {
   list.forEach(function (t) { var a = Number(t.amount) || 0; if (t.type === 'inc') inc += a; else exp += a; });
   return {inc: inc, exp: exp, bal: inc - exp};
 }
+// галочки «бюджет» и «накопления»; для старых данных включены, если суммы заданы
+function budOn() { var s = D().settings; return s.budgetOn != null ? !!s.budgetOn : Number(s.budget) > 0; }
+function savOn() { var s = D().settings; return s.savingsOn != null ? !!s.savingsOn : (Number(s.goal) > 0 || Number(s.startBalance) > 0); }
+function budgetVal() { return budOn() ? (Number(D().settings.budget) || 0) : 0; }
 function metrics(mk) {
   var list = monthTx(mk), t = totals(list);
   var N = daysIn(mk), el = elapsedIn(mk);
@@ -778,7 +837,7 @@ function metrics(mk) {
   list.forEach(function (x) { if (x.type !== 'inc') { nExp++; if (cat(x.cat).ess) need += Number(x.amount) || 0; } });
   var want = t.exp - need;
   var prev = totals(monthTx(shiftMonth(mk, -1)));
-  var budget = Number(D().settings.budget) || 0;
+  var budget = budgetVal();
   return {
     inc: t.inc, exp: t.exp, bal: t.bal, N: N, el: el, need: need, want: want, budget: budget, nExp: nExp, prevExp: prev.exp,
     savingsRate: t.inc > 0 ? t.bal / t.inc : null,
@@ -794,7 +853,7 @@ function metrics(mk) {
   };
 }
 function savingsAt(mk) {
-  var end = mk + '-31', s = Number(D().settings.startBalance) || 0;
+  var end = mk + '-31', s = savOn() ? (Number(D().settings.startBalance) || 0) : 0;
   D().tx.forEach(function (t) { if (t.date && t.date <= end) s += (t.type === 'inc' ? 1 : -1) * (Number(t.amount) || 0); });
   return s;
 }
@@ -802,8 +861,7 @@ function avgMonthlyExp(mk) {
   var vals = [];
   for (var k = 1; k <= 3; k++) { var e = totals(monthTx(shiftMonth(mk, -k))).exp; if (e > 0) vals.push(e); }
   if (vals.length) return vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
-  var m = metrics(mk);
-  return m.forecast || null;
+  return metrics(mk).forecast || null;
 }
 function placeAgg(list) {
   var map = new Map();
@@ -830,89 +888,153 @@ function placeAgg(list) {
   });
 }
 
-/* ================= зарплата по графику ================= */
-var SAL_DEFAULT = {mode: 'none', start: '', rate: 0, days: [1, 2, 3, 4, 5], amount: 0, day: 5, amount1: 0, day1: 20, amount2: 0, day2: 5, skip: []};
-function sanitizeSalary(s) {
-  s = (s && typeof s === 'object') ? s : {};
-  var o = Object.assign({}, SAL_DEFAULT, {days: SAL_DEFAULT.days.slice(), skip: []});
-  if (['none', 'daily', 'semi', 'monthly'].indexOf(s.mode) >= 0) o.mode = s.mode;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s.start || '')) o.start = s.start;
-  ['rate', 'amount', 'amount1', 'amount2'].forEach(function (k) { var v = Number(s[k]); if (isFinite(v) && v >= 0) o[k] = Math.round(v * 100) / 100; });
-  ['day', 'day1', 'day2'].forEach(function (k) { var v = Math.round(Number(s[k])); if (v >= 1 && v <= 31) o[k] = v; });
-  if (Array.isArray(s.days)) o.days = s.days.map(Number).filter(function (d) { return d >= 0 && d <= 6 && d === Math.floor(d); });
-  if (Array.isArray(s.skip)) o.skip = s.skip.filter(function (x) { return typeof x === 'string'; }).slice(-500);
-  return o;
+/* ================= источники дохода и хобби ================= */
+var SRC_MODES = ['daily', 'semi', 'monthly', 'custom'];
+function sanitizeSource(s) {
+  if (!s || typeof s !== 'object' || typeof s.id !== 'string' || !ID_RE.test(s.id)) return null;
+  var days = Array.isArray(s.days) ? s.days.map(Number).filter(function (d) { return d >= 0 && d <= 6 && d === Math.floor(d); }) : [1, 2, 3, 4, 5];
+  var dates = Array.isArray(s.dates) ? s.dates.map(Number).filter(function (d) { return d >= 1 && d <= 31 && d === Math.floor(d); }) : [];
+  return {
+    id: s.id, name: String(s.name || '').trim().slice(0, 40) || 'Доход',
+    cat: isIncCat(s.cat) ? s.cat : 'salary', on: s.on !== false,
+    mode: SRC_MODES.indexOf(s.mode) >= 0 ? s.mode : 'monthly',
+    start: DATE_RE.test(s.start || '') ? s.start : '',
+    rate: num0(s.rate), days: days,
+    amount: num0(s.amount), day: intIn(s.day, 1, 31, 5),
+    amount1: num0(s.amount1), day1: intIn(s.day1, 1, 31, 20),
+    amount2: num0(s.amount2), day2: intIn(s.day2, 1, 31, 5),
+    kind: s.kind === 'dates' ? 'dates' : 'interval', every: intIn(s.every, 1, 366, 14),
+    anchor: DATE_RE.test(s.anchor || '') ? s.anchor : '',
+    dates: dates.filter(function (d, i) { return dates.indexOf(d) === i; }).sort(function (a, b) { return a - b; }),
+    camount: num0(s.camount)
+  };
 }
-function salCfg() { return sanitizeSalary(D().settings.salary); }
-// все выплаты месяца по графику; id детерминированный, чтобы не было дублей
-function payDates(sal, mk) {
-  var N = daysIn(mk), out = [];
-  function at(d) { return mk + '-' + pad(Math.min(d, N)); }
-  if (sal.mode === 'monthly' && sal.amount > 0) out.push({id: 'sal-' + mk + '-m', date: at(sal.day), amount: sal.amount, note: 'Зарплата'});
-  else if (sal.mode === 'semi') {
-    if (sal.amount1 > 0) out.push({id: 'sal-' + mk + '-a', date: at(sal.day1), amount: sal.amount1, note: 'Аванс'});
-    if (sal.amount2 > 0) out.push({id: 'sal-' + mk + '-b', date: at(sal.day2), amount: sal.amount2, note: 'Зарплата'});
-    out.sort(function (a, b) { return a.date.localeCompare(b.date); });
-  } else if (sal.mode === 'daily' && sal.rate > 0) {
-    for (var d = 1; d <= N; d++) {
-      var ds = mk + '-' + pad(d);
-      if (sal.days.indexOf(parseDay(ds).getDay()) >= 0) out.push({id: 'sal-' + ds + '-d', date: ds, amount: sal.rate, note: 'Оплата за день'});
+function getSources(st) {
+  st = st || D().settings;
+  if (Array.isArray(st.sources)) return st.sources.map(sanitizeSource).filter(Boolean);
+  var lg = st.salary;
+  // перенос графика зарплаты из прошлой версии
+  if (lg && typeof lg === 'object' && ['daily', 'semi', 'monthly'].indexOf(lg.mode) >= 0) {
+    var s = sanitizeSource(Object.assign({}, lg, {id: 'main', name: 'Основная работа', cat: 'salary', on: true}));
+    return s ? [s] : [];
+  }
+  return [];
+}
+function getSkip(st) {
+  st = st || D().settings;
+  var a = Array.isArray(st.incomeSkip) ? st.incomeSkip : [];
+  var b = st.salary && Array.isArray(st.salary.skip) ? st.salary.skip : [];
+  return a.concat(b).filter(function (x) { return typeof x === 'string'; });
+}
+function sanitizeHobby(h) {
+  if (!h || typeof h !== 'object' || typeof h.id !== 'string' || !ID_RE.test(h.id)) return null;
+  return {id: h.id, name: String(h.name || '').trim().slice(0, 40) || 'Хобби', limit: num0(h.limit)};
+}
+function getHobbies(st) { st = st || D().settings; return Array.isArray(st.hobbies) ? st.hobbies.map(sanitizeHobby).filter(Boolean) : []; }
+function txSrc(t) { return t.src || (t.auto === 'salary' ? 'main' : null); }
+function srcPrefix(src) { return src.id === 'main' ? 'sal' : 'inc-' + src.id; }
+// все выплаты источника в месяце; id детерминированный, поэтому дублей не бывает
+function payDates(src, mk) {
+  var N = daysIn(mk), out = [], P = srcPrefix(src), d, ds;
+  function at(x) { return mk + '-' + pad(Math.min(x, N)); }
+  function push(id, date, amount, note) { out.push({id: id, date: date, amount: amount, note: note, src: src}); }
+  if (src.mode === 'monthly') { if (src.amount > 0) push(P + '-' + mk + '-m', at(src.day), src.amount, src.name); }
+  else if (src.mode === 'semi') {
+    if (src.amount1 > 0) push(P + '-' + mk + '-a', at(src.day1), src.amount1, src.name + ' · аванс');
+    if (src.amount2 > 0) push(P + '-' + mk + '-b', at(src.day2), src.amount2, src.name + ' · расчёт');
+  } else if (src.mode === 'daily') {
+    if (src.rate > 0) for (d = 1; d <= N; d++) { ds = mk + '-' + pad(d); if (src.days.indexOf(parseDay(ds).getDay()) >= 0) push(P + '-' + ds + '-d', ds, src.rate, src.name + ' · за день'); }
+  } else if (src.mode === 'custom' && src.camount > 0) {
+    if (src.kind === 'dates') {
+      var seen = {};
+      src.dates.forEach(function (x) { var dd = at(x); if (!seen[dd]) { seen[dd] = 1; push(P + '-' + dd + '-c', dd, src.camount, src.name); } });
+    } else if (src.anchor) {
+      var a = dayNum(src.anchor);
+      for (d = 1; d <= N; d++) { ds = mk + '-' + pad(d); var diff = dayNum(ds) - a; if (diff >= 0 && diff % src.every === 0) push(P + '-' + ds + '-i', ds, src.camount, src.name); }
     }
   }
-  return out;
+  return out.sort(function (x, y) { return x.date.localeCompare(y.date); });
 }
-// ожидаемый доход месяца: получено + выплаты по графику, которые ещё впереди
-function incomeForecast(mk) {
-  var sal = salCfg();
-  if (sal.mode === 'none') return null;
-  var td = today();
-  if (mk < monthKey(td)) return null;
-  var got = totals(monthTx(mk)).inc, ahead = 0;
-  var skip = new Set(sal.skip), have = new Set(D().tx.map(function (t) { return t.id; }));
-  payDates(sal, mk).forEach(function (p) { if (p.date > td && !skip.has(p.id) && !have.has(p.id)) ahead += p.amount; });
-  return got + ahead;
+// будущие выплаты месяца по активным источникам (ещё не записанные)
+function plannedIn(mk) {
+  var td = today(), skip = new Set(getSkip()), have = new Set(D().tx.map(function (t) { return t.id; })), out = [];
+  getSources().filter(function (s) { return s.on; }).forEach(function (src) {
+    var start = src.start || td;
+    payDates(src, mk).forEach(function (p) { if (p.date > td && p.date >= start && !have.has(p.id) && !skip.has(p.id)) out.push(p); });
+  });
+  return out.sort(function (x, y) { return x.date.localeCompare(y.date); });
 }
-var salaryBusy = false;
-// дописывает выплаты, дата которых уже наступила; вызывается при запуске, после сохранения графика и при возврате в приложение
-function ensureSalary() {
-  if (DEMO || salaryBusy || !Store.ready()) return;
-  var sal = sanitizeSalary(REAL.settings.salary);
-  if (sal.mode === 'none') return;
-  var td = today(), start = sal.start || td;
-  if (start > td) return;
-  var have = new Set(REAL.tx.map(function (t) { return t.id; })), skip = new Set(sal.skip), todo = [];
-  var mk = monthKey(start), guard = 0;
-  function collect(p) {
-    if (p.date >= start && p.date <= td && !have.has(p.id) && !skip.has(p.id))
-      todo.push({id: p.id, type: 'inc', amount: p.amount, cat: 'salary', date: p.date, note: p.note, auto: 'salary', created: Date.now()});
+function nextFor(src) {
+  var td = today(), skip = new Set(getSkip()), start = src.start || td;
+  for (var k = 0; k < 13; k++) {
+    var l = payDates(src, shiftMonth(monthKey(td), k));
+    for (var i = 0; i < l.length; i++) if (l[i].date > td && l[i].date >= start && !skip.has(l[i].id)) return l[i];
   }
-  while (mk <= monthKey(td) && guard++ < 120) { payDates(sal, mk).forEach(collect); mk = shiftMonth(mk, 1); }
+  return null;
+}
+function incomeForecast(mk) {
+  if (!getSources().some(function (s) { return s.on; })) return null;
+  if (mk < monthKey(today())) return null;
+  return totals(monthTx(mk)).inc + plannedIn(mk).reduce(function (a, p) { return a + p.amount; }, 0);
+}
+var incomeBusy = false;
+// дописывает выплаты, дата которых наступила: при запуске, после изменения источников и при возврате в приложение
+function ensureIncome() {
+  if (DEMO || incomeBusy || !Store.ready()) return;
+  var srcs = getSources(REAL.settings).filter(function (s) { return s.on; });
+  if (!srcs.length) return;
+  var td = today(), have = new Set(REAL.tx.map(function (t) { return t.id; })), skip = new Set(getSkip(REAL.settings)), todo = [];
+  srcs.forEach(function (src) {
+    var start = src.start || td;
+    if (start > td) return;
+    var mk = monthKey(start), guard = 0;
+    while (mk <= monthKey(td) && guard++ < 120) {
+      payDates(src, mk).forEach(function (p) {
+        if (p.date >= start && p.date <= td && !have.has(p.id) && !skip.has(p.id)) {
+          have.add(p.id);
+          todo.push({id: p.id, type: 'inc', amount: p.amount, cat: src.cat, date: p.date, note: p.note, auto: 'salary', src: src.id, created: Date.now()});
+        }
+      });
+      mk = shiftMonth(mk, 1);
+    }
+  });
   if (!todo.length) return;
   if (todo.length > 400) todo = todo.slice(-400);
   var sum = todo.reduce(function (a, t) { return a + t.amount; }, 0);
-  salaryBusy = true;
+  incomeBusy = true;
   Store.bulkPut(todo).then(function () {
-    toast(todo.length === 1 ? 'Записано по графику: ' + todo[0].note.toLowerCase() + ' +' + money(sum, true)
+    toast(todo.length === 1 ? 'Записано по графику: ' + todo[0].note + ' +' + money(sum, true)
       : 'Записано выплат по графику: ' + todo.length + ' на ' + money(sum, true));
     render();
-  }).catch(function (e) { toast(writeErr(e)); }).then(function () { salaryBusy = false; });
+  }).catch(function (e) { toast(writeErr(e)); }).then(function () { incomeBusy = false; });
 }
-function salaryLineHTML(mk) {
-  var sal = salCfg();
-  if (sal.mode === 'none') return '';
-  var td = today(), skip = new Set(sal.skip), nxt = null;
-  for (var k = 0; k < 3 && !nxt; k++) {
-    var l = payDates(sal, shiftMonth(monthKey(td), k));
-    for (var i = 0; i < l.length; i++) if (l[i].date > td && !skip.has(l[i].id)) { nxt = l[i]; break; }
-  }
-  var list = payDates(sal, mk), sum = 0;
-  list.forEach(function (p) { sum += p.amount; });
-  var head = {daily: 'Подневная оплата', semi: 'Зарплата раз в полмесяца', monthly: 'Зарплата раз в месяц'}[sal.mode];
-  var line1 = head + ': по графику ' + money(sum, true) + ' за ' + monthName(mk).toLowerCase();
-  if (sal.mode === 'daily') line1 += ' (' + list.length + ' ' + plural(list.length, 'рабочий день', 'рабочих дня', 'рабочих дней') + ' × ' + money(sal.rate, true) + ')';
-  var line2 = nxt ? 'Следующая выплата: ' + fmtDayShort(nxt.date) + ', ' + nxt.note.toLowerCase() + ' +' + money(nxt.amount, true) : '';
+function daysText(days) {
+  var d = days.slice().sort(function (a, b) { return ((a + 6) % 7) - ((b + 6) % 7); });
+  if (d.join() === '1,2,3,4,5') return 'Пн–Пт';
+  if (d.length === 7) return 'без выходных';
+  return d.map(function (x) { return WD_SHORT[x]; }).join(', ');
+}
+function srcDesc(s) {
+  if (s.mode === 'daily') return 'Подневная: ' + money(s.rate, true) + ' за день, ' + daysText(s.days);
+  if (s.mode === 'semi') return 'Раз в полмесяца: аванс ' + s.day1 + '-го ' + money(s.amount1, true) + ', расчёт ' + s.day2 + '-го ' + money(s.amount2, true);
+  if (s.mode === 'monthly') return 'Раз в месяц: ' + s.day + '-го ' + money(s.amount, true);
+  if (s.kind === 'dates') return 'Настраиваемый: по числам ' + s.dates.join(', ') + ', по ' + money(s.camount, true);
+  var ev = s.every === 1 ? 'каждый день' : plural(s.every, 'каждый ', 'каждые ', 'каждые ') + s.every + ' ' + plural(s.every, 'день', 'дня', 'дней');
+  return 'Настраиваемый: ' + ev + ' по ' + money(s.camount, true) + (s.anchor ? ', отсчёт от ' + fmtDayShort(s.anchor) : '');
+}
+function incomeLineHTML(mk) {
+  var srcs = getSources().filter(function (s) { return s.on; });
+  if (!srcs.length) return '';
+  var skip = new Set(getSkip()), sched = 0, nxt = null;
+  srcs.forEach(function (src) {
+    payDates(src, mk).forEach(function (p) { if (!skip.has(p.id)) sched += p.amount; });
+    var p = nextFor(src);
+    if (p && (!nxt || p.date < nxt.date)) nxt = p;
+  });
+  var line1 = 'Доход по графику за ' + monthName(mk).toLowerCase() + ': ' + money(sched, true) + ' · ' + srcs.length + ' ' + plural(srcs.length, 'источник', 'источника', 'источников');
+  var line2 = nxt ? 'Следующая выплата: ' + fmtDayShort(nxt.date) + ', ' + esc(nxt.note) + ' +' + money(nxt.amount, true) : '';
   return '<div class="sal-line"><span>' + line1 + '</span>' + (line2 ? '<span class="muted">' + line2 + '</span>' : '') +
-    '<button type="button" class="link" data-goto="more">Изменить график</button></div>';
+    '<button type="button" class="link" data-goto="inc">Источники дохода</button></div>';
 }
 
 /* ================= статусы ================= */
@@ -936,44 +1058,38 @@ function toast(msg) {
 function setSync(state) {
   S.sync = state;
   var map = {
-    loading: ['warn', 'Связь…'], cloud: ['ok', 'Облако'], slow: ['warn', 'Нет связи'],
-    error: ['bad', 'Ошибка'], local: ['', 'Локально']
+    loading: 'подключаюсь к облаку…', cloud: 'облако Claude, связь есть',
+    slow: 'облако Claude, сейчас нет связи', error: 'облако Claude, ошибка связи', local: 'только этот браузер на этом устройстве'
   };
-  var m = DEMO ? ['warn', 'Демо'] : (map[state] || map.local);
-  var el = $('sync');
-  el.className = 'sync ' + m[0];
-  el.lastChild.textContent = m[1];
+  S.syncText = DEMO ? 'демо-режим, ничего не сохраняется' : (map[state] || map.local);
 }
 
 function render() {
   $('mLabel').textContent = monthTitle(S.month);
-  $('mnav').classList.toggle('off', S.view === 'more');
+  $('curSym').textContent = cur();
   $('demoBar').hidden = !DEMO;
   document.querySelectorAll('.view').forEach(function (v) { v.hidden = v.dataset.view !== S.view; });
   document.querySelectorAll('.tab').forEach(function (b) {
     var on = b.dataset.tab === S.view; b.classList.toggle('on', on);
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
+  setSync(S.sync);
   if (S.view === 'cal') renderCal();
   else if (S.view === 'sum') renderSum();
-  else if (S.view === 'places') renderPlaces();
-  else renderMore();
-  setSync(S.sync);
+  else if (S.view === 'inc') renderInc();
+  else renderPlaces();
 }
 
 function renderCal() {
   var mk = S.month, list = monthTx(mk), t = totals(list), m = metrics(mk);
+  $('netNote').hidden = !(!DEMO && (S.sync === 'slow' || S.sync === 'error'));
   $('welcome').hidden = !(S.loaded && !DEMO && REAL.tx.length === 0);
   $('cExp').textContent = money(t.exp, true);
   $('cInc').textContent = money(t.inc, true);
   var bal = $('cBal'); bal.textContent = money(t.bal, true); bal.classList.toggle('neg', t.bal < 0);
   $('budgetBox').innerHTML = budgetHTML(m, mk);
-  $('salLine').innerHTML = salaryLineHTML(mk);
-  var sal = salCfg(), plan = new Set();
-  if (sal.mode !== 'none') {
-    var haveIds = new Set(D().tx.map(function (x) { return x.id; })), skipIds = new Set(sal.skip), tdy = today();
-    payDates(sal, mk).forEach(function (pp) { if (pp.date > tdy && !haveIds.has(pp.id) && !skipIds.has(pp.id)) plan.add(pp.date); });
-  }
+  $('incLine').innerHTML = incomeLineHTML(mk);
+  var plan = new Set(plannedIn(mk).map(function (pp) { return pp.date; }));
   $('planLegend').hidden = !plan.size;
 
   var p = mk.split('-').map(Number), N = daysIn(mk);
@@ -1014,8 +1130,10 @@ function renderCal() {
 
 function txItem(t) {
   var inc = t.type === 'inc', c = cat(t.cat);
+  var hob = t.hobby ? getHobbies().filter(function (h) { return h.id === t.hobby; })[0] : null;
   var sub = [];
   if (t.time) sub.push(esc(t.time));
+  if (hob) sub.push('хобби «' + esc(hob.name) + '»');
   if (t.place) sub.push((typeof t.lat === 'number' ? PIN : '') + esc(t.place));
   if (t.note) sub.push(esc(t.note));
   return '<li><button type="button" class="tx" data-id="' + esc(t.id) + '">' +
@@ -1025,7 +1143,7 @@ function txItem(t) {
 }
 
 function budgetHTML(m, mk) {
-  if (!m.budget) return '<button type="button" class="link" data-goto="more">Задайте бюджет месяца — появится шкала и темп трат</button>';
+  if (!m.budget) return '';
   var isCur = mk === monthKey(today());
   var used = Math.min(m.exp / m.budget, 1), left = m.budget - m.exp;
   var cls = '';
@@ -1061,9 +1179,10 @@ function renderSum() {
     kpi('Необязательные / доход', pct(m.wantShare), stShare(m.wantShare, 0.3), 'Р<sub>н</sub> / Д · ' + money(m.want, true));
 
   var isCur = mk === monthKey(today());
+  var noBud = 'Включите бюджет во вкладке «Доходы и хобби»';
   $('kpiPace').innerHTML =
-    kpi('Темп трат', m.pace == null ? '—' : num(m.pace, 2), stPace(m.pace), m.budget ? '(Р / d) / (Б / N), d = ' + m.el + ', N = ' + m.N : 'Задайте бюджет в разделе «Ещё»') +
-    kpi('Исполнение бюджета', pct(m.budgetUse), stBudget(m.budgetUse), m.budget ? 'Р / Б · Б = ' + money(m.budget, true) : 'Бюджет не задан') +
+    kpi('Темп трат', m.pace == null ? '—' : num(m.pace, 2), stPace(m.pace), m.budget ? '(Р / d) / (Б / N), d = ' + m.el + ', N = ' + m.N : noBud) +
+    kpi('Исполнение бюджета', pct(m.budgetUse), stBudget(m.budgetUse), m.budget ? 'Р / Б · Б = ' + money(m.budget, true) : noBud) +
     kpi(isCur ? 'Прогноз на месяц' : 'Расходы за месяц', m.forecast == null ? '—' : money(isCur ? m.forecast : m.exp, true), null, isCur ? 'Р / d × N — если тратить в том же темпе' : 'месяц завершён') +
     kpi('В среднем в день', m.perDay == null ? '—' : money(m.perDay, true), null, 'Р / d · средний чек ' + (m.avgCheck == null ? '—' : money(m.avgCheck, true))) +
     kpi('К прошлому месяцу', m.mom == null ? '—' : (m.mom > 0 ? '+' : '') + pct(m.mom), stMom(m.mom), 'Р / Р<sub>пред</sub> − 1 · было ' + money(m.prevExp, true));
@@ -1073,11 +1192,10 @@ function renderSum() {
     var expF = byBudget ? (m.budget || null) : (isCur ? m.forecast : m.exp);
     var rateF = incF > 0 && expF != null ? (incF - expF) / incF : null;
     $('kpiPace').insertAdjacentHTML('beforeend', kpi('Ожидаемый доход', money(incF, true), rateF == null ? null : stSavings(rateF),
-      (m.inc > 0 ? 'получено ' + money(m.inc, true) + ' + по графику ' + money(incF - m.inc, true) : 'по графику зарплаты') +
+      (m.inc > 0 ? 'получено ' + money(m.inc, true) + ' + по графику ' + money(incF - m.inc, true) : 'по графику источников дохода') +
       (rateF != null ? ' · прогноз нормы сбережений ' + pct(rateF, 1) + (byBudget ? ' при расходах = бюджету' : '') : '')));
   }
 
-  // категории
   var byCat = {};
   monthTx(mk).forEach(function (t) { if (t.type !== 'inc') byCat[t.cat] = (byCat[t.cat] || 0) + (Number(t.amount) || 0); });
   var rows = Object.keys(byCat).map(function (k) { return {c: cat(k), v: byCat[k]}; }).sort(function (a, b) { return b.v - a.v; });
@@ -1092,7 +1210,9 @@ function renderSum() {
   }
   renderTrend();
 
-  // накопления
+  var so = savOn();
+  $('savSec').hidden = !so; $('savings').hidden = !so;
+  if (!so) return;
   var sav = savingsAt(mk), goal = Number(D().settings.goal) || 0, avg = avgMonthlyExp(mk);
   var cushion = avg && avg > 0 ? sav / avg : null, cst = stCushion(cushion);
   var html = '<div class="save-row"><span class="lbl">Накоплено на конец месяца</span><b' + (sav < 0 ? ' style="color:var(--bad)"' : '') + '>' + money(sav, true) + '</b></div>' +
@@ -1102,7 +1222,7 @@ function renderSum() {
     html += '<div class="save-row"><span>Цель ' + money(goal, true) + '</span><span class="st ' + (g >= 1 ? 'good' : 'na') + '">' + pct(sav / goal) + '</span></div>' +
       '<div class="meter" role="img" aria-label="Цель выполнена на ' + pct(sav / goal) + '"><i style="width:' + (g * 100).toFixed(1) + '%"></i></div>';
     if (sav < goal && m.bal > 0) html += '<div class="hint">Если откладывать по ' + money(m.bal, true) + ' в месяц, до цели ≈ ' + Math.ceil((goal - sav) / m.bal) + ' мес.</div>';
-  } else html += '<button type="button" class="link" data-goto="more">Поставьте цель накоплений</button>';
+  } else html += '<button type="button" class="link" data-goto="inc">Поставьте цель накоплений</button>';
   html += '<div class="save-row"><span>Финансовая подушка</span><span><b>' + (cushion == null ? '—' : num(Math.max(cushion, 0), 1) + ' мес.') + '</b> <span class="st ' + cst[0] + '">' + cst[1] + '</span></span></div>' +
     '<div class="hint">Н / средние расходы за 3 прошлых месяца' + (avg ? ' (' + money(avg, true) + ')' : '') + '. На сколько месяцев хватит накоплений без доходов.</div>';
   $('savings').innerHTML = html;
@@ -1203,115 +1323,279 @@ function renderPlaces() {
   }).join('');
 }
 
-function renderMore() {
-  var s = D().settings;
-  var active = document.activeElement;
-  var editing = active && active.closest && active.closest('#setForm');
-  if (!editing) {
-    $('sCur').value = s.currency || '₽';
+function renderInc() {
+  var mk = S.month, mname = monthName(mk).toLowerCase(), srcs = getSources(), hobs = getHobbies();
+  var inc = monthTx(mk).filter(function (t) { return t.type === 'inc'; });
+  var got = totals(inc).inc;
+  var ahead = plannedIn(mk).reduce(function (a, p) { return a + p.amount; }, 0);
+  $('iHeroLbl').textContent = 'Доходы за ' + mname;
+  $('iHero').textContent = money(got, true);
+  $('iHeroSub').textContent = ahead > 0 ? 'По графику ещё +' + money(ahead, true) + ', всего ожидается ' + money(got + ahead, true)
+    : (srcs.some(function (s) { return s.on; }) ? 'Выплат по графику в этом месяце больше не ожидается.' : 'Добавьте источник дохода — выплаты будут записываться сами.');
+
+  var bySrc = {}, none = 0, ids = srcs.map(function (s) { return s.id; });
+  inc.forEach(function (t) { var s = txSrc(t), a = Number(t.amount) || 0; if (s && ids.indexOf(s) >= 0) bySrc[s] = (bySrc[s] || 0) + a; else none += a; });
+  $('srcList').innerHTML = srcs.map(function (s) {
+    var nx = s.on ? nextFor(s) : null;
+    return '<li class="card"><div class="src-top"><b>' + esc(s.name) + '</b><span class="st ' + (s.on ? 'good' : 'na') + '">' + (s.on ? 'активен' : 'на паузе') + '</span></div>' +
+      '<div class="hint">' + esc(cat(s.cat).name) + ' · ' + srcDesc(s) + '</div>' +
+      '<div class="save-row"><span>Получено за ' + mname + '</span><b>' + money(bySrc[s.id] || 0, true) + '</b></div>' +
+      (nx ? '<div class="hint">Следующая выплата: ' + fmtDayShort(nx.date) + ', +' + money(nx.amount, true) + '</div>' : '') +
+      '<div class="btn-row"><button type="button" class="btn small" data-src-edit="' + s.id + '">Изменить</button>' +
+      '<button type="button" class="btn small ghost" data-src-toggle="' + s.id + '">' + (s.on ? 'Поставить на паузу' : 'Включить') + '</button></div></li>';
+  }).join('') + (none > 0 ? '<li class="card"><div class="src-top"><b>Без источника</b><span class="cat-amt">' + money(none, true) + '</span></div><div class="hint">Доходы за ' + mname + ', записанные без выбора источника.</div></li>' : '');
+
+  renderPlanForm();
+
+  $('hobbyList').innerHTML = hobs.length ? hobs.map(function (h) {
+    var mExp = 0, mInc = 0, aExp = 0, aInc = 0, n = 0;
+    D().tx.forEach(function (t) {
+      if (t.hobby !== h.id) return;
+      var a = Number(t.amount) || 0; n++;
+      if (t.type === 'inc') aInc += a; else aExp += a;
+      if (t.date && t.date.slice(0, 7) === mk) { if (t.type === 'inc') mInc += a; else mExp += a; }
+    });
+    var used = h.limit ? mExp / h.limit : 0, cls = used > 1 ? 'bad' : (used > 0.9 ? 'warn' : '');
+    return '<li class="card"><div class="src-top"><b>' + esc(h.name) + '</b><span class="cat-amt">' + money(mExp, true) + (h.limit ? ' из ' + money(h.limit, true) : '') + '</span></div>' +
+      (h.limit ? '<div class="meter ' + cls + '" role="img" aria-label="Лимит хобби использован на ' + pct(used) + '"><i style="width:' + (Math.min(used, 1) * 100).toFixed(1) + '%"></i></div>' : '') +
+      '<div class="hint">' + (mInc ? 'Заработано за ' + mname + ' +' + money(mInc, true) + '. ' : '') + 'За всё время: потрачено ' + money(aExp, true) +
+      (aInc ? ', заработано +' + money(aInc, true) : '') + ' · ' + n + ' ' + plural(n, 'запись', 'записи', 'записей') + '</div>' +
+      '<div class="btn-row"><button type="button" class="btn small" data-hobby-add="' + h.id + '">Записать трату</button>' +
+      '<button type="button" class="btn small ghost" data-hobby-edit="' + h.id + '">Изменить</button></div></li>';
+  }).join('') : '<li class="card muted">Добавьте хобби: траты на него можно будет отмечать при записи и видеть здесь отдельно, с лимитом на месяц.</li>';
+
+  var nReal = REAL.tx.length;
+  var info = '<b>Где хранятся записи:</b> ' + esc(S.syncText) + '. Записей: ' + nReal + '. ' +
+    (Store.mode === 'cloud' ? 'Их видите только вы, на телефоне и компьютере данные одинаковые.' : 'Раз в месяц скачивайте копию: при очистке данных браузера записи пропадут.');
+  if (IN_VIEWER) info += ' Версия с GPS: <a href="' + GPS_URL + '" target="_blank" rel="noopener">azafot.github.io/dnevnik-trat</a>, записи переносятся копией.';
+  $('storeInfo').innerHTML = info;
+}
+
+/* ================= валюта ================= */
+function renderCurMenu() {
+  var c = cur();
+  $('curMenu').innerHTML = CURRENCIES.map(function (x) {
+    return '<button type="button" role="menuitemradio" aria-checked="' + (x[0] === c) + '" data-cur="' + esc(x[0]) + '" class="' + (x[0] === c ? 'on' : '') + '"><b>' + esc(x[0]) + '</b>' + x[1] + '</button>';
+  }).join('');
+}
+function setCurMenu(open) {
+  if (open) renderCurMenu();
+  $('curMenu').hidden = !open;
+  $('curBtn').setAttribute('aria-expanded', open);
+}
+
+/* ================= бюджет и накопления (галочки) ================= */
+var planDirty = false;
+function renderPlanForm() {
+  var s = D().settings, bo = budOn(), so = savOn();
+  $('budOn').checked = bo; $('savOn').checked = so;
+  $('budWrap').hidden = !bo; $('savWrap').hidden = !so; $('planSave').hidden = !bo && !so;
+  if (!planDirty) {
     $('sBudget').value = s.budget ? NF.format(s.budget) : '';
     $('sGoal').value = s.goal ? NF.format(s.goal) : '';
     $('sStart').value = s.startBalance ? NF.format(s.startBalance) : '';
   }
-  if (!salDirty) fillSalForm(sanitizeSalary(s.salary));
-  var n = REAL.tx.length;
-  var info;
-  if (DEMO) info = 'Сейчас открыт демо-режим: показаны примеры, ваши записи не тронуты.';
-  else if (Store.mode === 'cloud') info = 'Записи хранятся в облаке Claude, в вашем личном разделе этой страницы: другие люди их не видят, а на телефоне и компьютере данные одинаковые. Сейчас записей: ' + n + '.';
-  else if (Store.mode === 'local' && IN_VIEWER) info = 'Облачное хранилище в этом окне недоступно (например, вы не вошли в аккаунт), поэтому записи сохраняются только в этом браузере. Записей: ' + n + '.';
-  else info = 'Записи хранятся только в этом браузере на этом телефоне. Раз в месяц скачивайте копию: при очистке данных браузера записи пропадут. Записей: ' + n + '.';
-  $('storeInfo').textContent = info;
-  $('installInfo').innerHTML = IN_VIEWER
-    ? '<p><b>Уже работает:</b> откройте эту страницу на телефоне в приложении Claude или в браузере, войдя в тот же аккаунт. Записи синхронизируются через облако.</p>' +
-      '<p><b>GPS:</b> окно Claude не даёт страницам доступ к геолокации, поэтому здесь место вводится вручную. Версия с GPS: <a href="https://azafot.github.io/dnevnik-trat/" target="_blank" rel="noopener">azafot.github.io/dnevnik-trat</a>. Откройте её на телефоне в Chrome или Safari и выберите «Добавить на главный экран». Перенести записи: «Скачать копию» здесь → «Загрузить копию» там.</p>'
-    : '<ol><li>Откройте этот адрес в Chrome (Android) или Safari (iPhone).</li><li>Chrome: меню ⋮ → «Добавить на главный экран». Safari: «Поделиться» → «На экран „Домой“».</li><li>При первой записи с GPS разрешите доступ к геолокации.</li></ol><p class="muted">Приложение работает и без интернета; данные хранятся в памяти телефона.</p>';
+}
+function togglePlan(key, on) {
+  var o = {}; o[key] = on;
+  Store.putSettings(o).catch(function (e) { toast(writeErr(e)); });
+}
+function submitPlan(ev) {
+  ev.preventDefault();
+  var vals = {}, bad = '';
+  function rd(id, key, label) {
+    var raw = $(id).value.trim();
+    if (!raw) { vals[key] = 0; return; }
+    var v = parseAmount(raw);
+    if (!isFinite(v) || v < 0) bad = bad || 'Проверьте ' + label + ': нужно число, например 45000.';
+    else vals[key] = v;
+  }
+  if (budOn()) rd('sBudget', 'budget', 'бюджет');
+  if (savOn()) { rd('sStart', 'startBalance', 'накопленную сумму'); rd('sGoal', 'goal', 'цель'); }
+  if (bad) { $('planErr').textContent = bad; $('planErr').hidden = false; return; }
+  $('planErr').hidden = true;
+  planDirty = false;
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  Store.putSettings(vals).then(function () { toast(DEMO ? 'Изменено в демо' : 'Суммы сохранены'); })
+    .catch(function (e) { $('planErr').textContent = writeErr(e); $('planErr').hidden = false; });
 }
 
-/* ================= форма графика зарплаты ================= */
-var SALUI = {mode: 'none', days: [1, 2, 3, 4, 5]};
-var salDirty = false;
-var SAL_HINTS = {
-  none: 'Доходы вносятся вручную кнопкой «+».',
-  daily: 'В каждый отмеченный рабочий день доход «Оплата за день» запишется сам. Не работали — откройте эту запись в календаре и удалите: за этот день она больше не появится.',
-  semi: 'Аванс и зарплата запишутся сами в дни выплат. По ТК РФ (ст. 136) зарплату платят не реже чем каждые полмесяца, чаще всего аванс 20–25-го и расчёт 5–10-го.',
-  monthly: 'Зарплата запишется сама в день выплаты. Если такого дня в месяце нет (например, 31-го), запись будет в последний день месяца.'
+/* ================= форма источника дохода ================= */
+var SRCUI = null;
+var SRC_HINTS = {
+  daily: 'В каждый отмеченный день доход запишется сам. Не работали — удалите запись этого дня в календаре: она больше не появится.',
+  semi: 'Аванс и расчёт запишутся сами в дни выплат. По ТК РФ (ст. 136) зарплату платят не реже чем каждые полмесяца.',
+  monthly: 'Выплата запишется сама. Если такого числа в месяце нет (например, 31-го), запись будет в последний день месяца.',
+  interval: 'Выплата запишется каждые N дней, считая от указанной даты. Раз в две недели — промежуток 14, раз в неделю — 7.',
+  dates: 'Выплата запишется в каждое из указанных чисел. Например, «10, 25» или «1, 11, 21». 31-е в коротком месяце станет последним днём.'
 };
-function fillSalForm(sal) {
-  SALUI = {mode: sal.mode, days: sal.days.slice()};
-  $('salRate').value = sal.rate ? NF.format(sal.rate) : '';
-  $('salAmount').value = sal.amount ? NF.format(sal.amount) : '';
-  $('salDay').value = sal.day;
-  $('salA1').value = sal.amount1 ? NF.format(sal.amount1) : '';
-  $('salD1').value = sal.day1;
-  $('salA2').value = sal.amount2 ? NF.format(sal.amount2) : '';
-  $('salD2').value = sal.day2;
-  $('salStart').value = sal.start || today();
-  $('salErr').hidden = true;
-  renderSalUI();
+function openSrcForm(src) {
+  var s = src || sanitizeSource({id: 'new', name: '', mode: 'semi', cat: 'salary'});
+  SRCUI = {id: src ? src.id : null, mode: s.mode, days: s.days.slice(), kind: s.kind, cat: s.cat, on: src ? src.on : true};
+  $('srcName').value = src ? src.name : '';
+  $('srcRate').value = s.rate ? NF.format(s.rate) : '';
+  $('srcA1').value = s.amount1 ? NF.format(s.amount1) : ''; $('srcD1').value = s.day1;
+  $('srcA2').value = s.amount2 ? NF.format(s.amount2) : ''; $('srcD2').value = s.day2;
+  $('srcAmount').value = s.amount ? NF.format(s.amount) : ''; $('srcDay').value = s.day;
+  $('srcCAmount').value = s.camount ? NF.format(s.camount) : '';
+  $('srcEvery').value = s.every; $('srcAnchor').value = s.anchor || today();
+  $('srcDates').value = s.dates.join(', ');
+  $('srcStart').value = src ? (s.start || today()) : today();
+  $('srcFormTitle').textContent = src ? 'Изменить источник' : 'Новый источник дохода';
+  var del = $('srcDelete'); del.hidden = !src; delete del.dataset.armed; del.textContent = 'Удалить источник';
+  $('srcErr').hidden = true;
+  $('srcForm').hidden = false; $('srcAdd').hidden = true;
+  renderSrcUI();
+  try { $('srcForm').scrollIntoView({block: 'start', behavior: 'smooth'}); } catch (e) {}
 }
-function renderSalUI() {
-  var mode = SALUI.mode;
-  document.querySelectorAll('#salMode button').forEach(function (b) {
-    var on = b.dataset.salmode === mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
-  });
-  $('salDaily').hidden = mode !== 'daily';
-  $('salSemi').hidden = mode !== 'semi';
-  $('salMonthly').hidden = mode !== 'monthly';
-  $('salStartWrap').hidden = mode === 'none';
+function closeSrcForm() { $('srcForm').hidden = true; $('srcAdd').hidden = false; SRCUI = null; }
+function renderSrcUI() {
+  if (!SRCUI) return;
+  var m = SRCUI.mode;
+  document.querySelectorAll('#srcMode button').forEach(function (b) { var on = b.dataset.srcmode === m; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+  document.querySelectorAll('#srcKind button').forEach(function (b) { var on = b.dataset.kind === SRCUI.kind; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+  $('mDaily').hidden = m !== 'daily'; $('mSemi').hidden = m !== 'semi'; $('mMonthly').hidden = m !== 'monthly'; $('mCustom').hidden = m !== 'custom';
+  $('kInterval').hidden = SRCUI.kind !== 'interval'; $('kDates').hidden = SRCUI.kind !== 'dates';
+  $('srcCats').innerHTML = INC_CATS.map(function (c) {
+    var on = c.id === SRCUI.cat;
+    return '<button type="button" class="chip-btn' + (on ? ' on' : '') + '" data-srccat="' + c.id + '" aria-pressed="' + on + '">' + esc(c.name) + '</button>';
+  }).join('');
   var names = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'], order = [1, 2, 3, 4, 5, 6, 0];
-  $('salDays').innerHTML = order.map(function (wd, i) {
-    var on = SALUI.days.indexOf(wd) >= 0;
+  $('srcDays').innerHTML = order.map(function (wd, i) {
+    var on = SRCUI.days.indexOf(wd) >= 0;
     return '<button type="button" class="chip-btn' + (on ? ' on' : '') + '" data-wd="' + wd + '" aria-pressed="' + on + '">' + names[i] + '</button>';
   }).join('');
-  var st = $('salStart').value;
-  $('salHint').textContent = SAL_HINTS[mode] +
-    (mode !== 'none' && st && st < today() ? ' Выплаты за прошедшие даты начиная с ' + fmtDayShort(st) + ' запишутся сразу после сохранения.' : '');
+  var st = $('srcStart').value;
+  $('srcHint').textContent = SRC_HINTS[m === 'custom' ? SRCUI.kind : m] +
+    (st && st < today() ? ' Выплаты за прошедшие даты начиная с ' + fmtDayShort(st) + ' запишутся сразу после сохранения.' : '');
 }
-function submitSalary(ev) {
+function submitSrc(ev) {
   ev.preventDefault();
-  var o = Object.assign(salCfg(), {mode: SALUI.mode, days: SALUI.days.slice().sort()});
-  var err = '';
-  function amt(id, label) {
-    var v = parseAmount($(id).value);
-    if (!(v > 0)) { err = err || 'Укажите ' + label + ': число больше нуля.'; return 0; }
-    return v;
+  if (!SRCUI) return;
+  var err = '', list = getSources();
+  var old = SRCUI.id ? list.filter(function (s) { return s.id === SRCUI.id; })[0] : null;
+  var o = Object.assign({}, old || {}, {id: SRCUI.id || shortId('s'), name: $('srcName').value.trim(), cat: SRCUI.cat, on: SRCUI.on,
+    mode: SRCUI.mode, days: SRCUI.days.slice().sort(), kind: SRCUI.kind});
+  if (!o.name) err = 'Введите название, например «Основная работа».';
+  function amt(id, label) { var v = parseAmount($(id).value); if (!(v > 0)) { err = err || 'Укажите ' + label + ': число больше нуля.'; return 0; } return v; }
+  function day(id, label) { var v = Math.round(Number($(id).value)); if (!(v >= 1 && v <= 31)) { err = err || label + ' — число от 1 до 31.'; return 1; } return v; }
+  if (o.mode === 'daily') { o.rate = amt('srcRate', 'оплату за день'); if (!o.days.length) err = err || 'Отметьте хотя бы один рабочий день.'; }
+  if (o.mode === 'semi') { o.amount1 = amt('srcA1', 'сумму аванса'); o.day1 = day('srcD1', 'День аванса'); o.amount2 = amt('srcA2', 'сумму расчёта'); o.day2 = day('srcD2', 'День расчёта'); }
+  if (o.mode === 'monthly') { o.amount = amt('srcAmount', 'сумму выплаты'); o.day = day('srcDay', 'День выплаты'); }
+  if (o.mode === 'custom') {
+    o.camount = amt('srcCAmount', 'сумму одной выплаты');
+    if (o.kind === 'interval') {
+      var ev2 = Math.round(Number($('srcEvery').value));
+      if (!(ev2 >= 1 && ev2 <= 366)) err = err || 'Промежуток — число дней от 1 до 366.'; else o.every = ev2;
+      var an = $('srcAnchor').value;
+      if (!DATE_RE.test(an)) err = err || 'Укажите дату одной из выплат, от неё пойдёт отсчёт.'; else o.anchor = an;
+    } else {
+      var ds = String($('srcDates').value).split(/[^0-9]+/).filter(Boolean).map(Number).filter(function (d) { return d >= 1 && d <= 31; });
+      if (!ds.length) err = err || 'Укажите числа месяца через запятую, например 10, 25.'; else o.dates = ds;
+    }
   }
-  function day(id, label) {
-    var v = Math.round(Number($(id).value));
-    if (!(v >= 1 && v <= 31)) { err = err || 'День выплаты (' + label + ') — число от 1 до 31.'; return 1; }
-    return v;
+  var st = $('srcStart').value;
+  if (!DATE_RE.test(st)) err = err || 'Укажите, с какой даты записывать выплаты.'; else o.start = st;
+  if (err) { $('srcErr').textContent = err; $('srcErr').hidden = false; return; }
+  $('srcErr').hidden = true;
+  var clean1 = sanitizeSource(o);
+  if (old) {
+    // график изменился, а дату начала не трогали: пишем по новому графику только с сегодняшнего дня, без дублей за прошлые дни
+    var changed = ['mode', 'kind', 'every', 'anchor', 'dates', 'day', 'day1', 'day2', 'days'].some(function (k) { return JSON.stringify(old[k]) !== JSON.stringify(clean1[k]); });
+    if (changed && clean1.start < today() && clean1.start === old.start) clean1.start = today();
   }
-  if (o.mode === 'daily') { o.rate = amt('salRate', 'оплату за день'); if (!o.days.length) err = err || 'Отметьте хотя бы один рабочий день.'; }
-  if (o.mode === 'monthly') { o.amount = amt('salAmount', 'сумму зарплаты'); o.day = day('salDay', 'зарплата'); }
-  if (o.mode === 'semi') {
-    o.amount1 = amt('salA1', 'сумму аванса'); o.day1 = day('salD1', 'аванс');
-    o.amount2 = amt('salA2', 'сумму зарплаты'); o.day2 = day('salD2', 'зарплата');
-  }
-  var st = $('salStart').value;
-  if (o.mode !== 'none' && !/^\d{4}-\d{2}-\d{2}$/.test(st)) err = err || 'Укажите, с какой даты записывать выплаты.';
-  o.start = st || today();
-  if (err) { $('salErr').textContent = err; $('salErr').hidden = false; return; }
-  $('salErr').hidden = true;
-  salDirty = false;
+  var i = list.map(function (s) { return s.id; }).indexOf(clean1.id);
+  if (i >= 0) list[i] = clean1; else list.push(clean1);
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  Store.putSettings({salary: o}).then(function () {
-    toast(o.mode === 'none' ? 'Автозапись зарплаты выключена' : (DEMO ? 'График изменён в демо (не сохраняется)' : 'График зарплаты сохранён'));
-    render();
-    ensureSalary();
-  }).catch(function (e) { $('salErr').textContent = writeErr(e); $('salErr').hidden = false; });
+  Store.putSettings({sources: list}).then(function () {
+    closeSrcForm(); render();
+    toast(DEMO ? 'Изменено в демо' : 'Источник «' + clean1.name + '» сохранён');
+    ensureIncome();
+  }).catch(function (e) { $('srcErr').textContent = writeErr(e); $('srcErr').hidden = false; });
+}
+function toggleSrc(id) {
+  var list = getSources(), s = list.filter(function (x) { return x.id === id; })[0];
+  if (!s) return;
+  s.on = !s.on;
+  if (s.on) s.start = today(); // за время паузы выплаты не дописываются
+  Store.putSettings({sources: list}).then(function () { toast(s.on ? 'Источник снова активен' : 'Источник на паузе: выплаты не записываются'); ensureIncome(); })
+    .catch(function (e) { toast(writeErr(e)); });
+}
+function deleteSrc() {
+  var b = $('srcDelete');
+  if (!b.dataset.armed) {
+    b.dataset.armed = '1'; b.textContent = 'Точно удалить?';
+    setTimeout(function () { if (b.dataset.armed) { delete b.dataset.armed; b.textContent = 'Удалить источник'; } }, 3500);
+    return;
+  }
+  delete b.dataset.armed;
+  var id = SRCUI && SRCUI.id;
+  if (!id) return;
+  Store.putSettings({sources: getSources().filter(function (s) { return s.id !== id; })}).then(function () {
+    closeSrcForm(); render(); toast('Источник удалён. Записанные выплаты остались в календаре.');
+  }).catch(function (e) { toast(writeErr(e)); });
+}
+
+/* ================= хобби ================= */
+var HOBBYUI = {id: null};
+function resetHobbyForm() {
+  HOBBYUI.id = null;
+  $('hobbyName').value = ''; $('hobbyLimit').value = '';
+  $('hobbyFormTitle').textContent = 'Новое хобби';
+  $('hobbySave').textContent = 'Добавить хобби';
+  $('hobbyCancel').hidden = true;
+  var del = $('hobbyDelete'); del.hidden = true; delete del.dataset.armed; del.textContent = 'Удалить хобби';
+  $('hobbyErr').hidden = true;
+}
+function editHobby(id) {
+  var h = getHobbies().filter(function (x) { return x.id === id; })[0];
+  if (!h) return;
+  HOBBYUI.id = id;
+  $('hobbyName').value = h.name; $('hobbyLimit').value = h.limit ? NF.format(h.limit) : '';
+  $('hobbyFormTitle').textContent = 'Изменить хобби';
+  $('hobbySave').textContent = 'Сохранить';
+  $('hobbyCancel').hidden = false; $('hobbyDelete').hidden = false;
+  try { $('hobbyForm').scrollIntoView({block: 'center', behavior: 'smooth'}); } catch (e) {}
+}
+function submitHobby(ev) {
+  ev.preventDefault();
+  var name = $('hobbyName').value.trim(), raw = $('hobbyLimit').value.trim(), limit = 0;
+  if (!name) { $('hobbyErr').textContent = 'Введите название хобби.'; $('hobbyErr').hidden = false; return; }
+  if (raw) { limit = parseAmount(raw); if (!isFinite(limit) || limit < 0) { $('hobbyErr').textContent = 'Лимит — число, например 5000, или оставьте поле пустым.'; $('hobbyErr').hidden = false; return; } }
+  var list = getHobbies(), wasEdit = !!HOBBYUI.id;
+  if (wasEdit) list.forEach(function (h) { if (h.id === HOBBYUI.id) { h.name = name; h.limit = limit; } });
+  else list.push({id: shortId('h'), name: name, limit: limit});
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  Store.putSettings({hobbies: list}).then(function () { resetHobbyForm(); toast(wasEdit ? 'Хобби изменено' : 'Хобби «' + name + '» добавлено'); })
+    .catch(function (e) { $('hobbyErr').textContent = writeErr(e); $('hobbyErr').hidden = false; });
+}
+function deleteHobby() {
+  var b = $('hobbyDelete');
+  if (!b.dataset.armed) {
+    b.dataset.armed = '1'; b.textContent = 'Точно удалить?';
+    setTimeout(function () { if (b.dataset.armed) { delete b.dataset.armed; b.textContent = 'Удалить хобби'; } }, 3500);
+    return;
+  }
+  var id = HOBBYUI.id;
+  Store.putSettings({hobbies: getHobbies().filter(function (h) { return h.id !== id; })}).then(function () {
+    resetHobbyForm(); toast('Хобби удалено. Записи остались в календаре.');
+  }).catch(function (e) { toast(writeErr(e)); });
 }
 
 /* ================= форма записи ================= */
-var F = {id: null, type: 'exp', cat: null, lat: null, lon: null, acc: null, created: null, auto: null};
-function openSheet(tx, presetDate) {
+var F = {id: null, type: 'exp', cat: null, lat: null, lon: null, acc: null, created: null, auto: null, src: null, hobby: null};
+function openSheet(tx, presetDate, opts) {
+  opts = opts || {};
   F.id = tx ? tx.id : null;
-  F.type = tx ? tx.type : 'exp';
-  F.cat = tx ? tx.cat : null;
+  F.type = tx ? tx.type : (opts.type || 'exp');
+  F.cat = tx ? tx.cat : (opts.cat || null);
   F.lat = tx && typeof tx.lat === 'number' ? tx.lat : null;
   F.lon = tx && typeof tx.lon === 'number' ? tx.lon : null;
   F.acc = tx && typeof tx.acc === 'number' ? tx.acc : null;
   F.created = tx ? tx.created : null;
   F.auto = tx && tx.auto === 'salary' ? 'salary' : null;
+  F.src = tx ? (tx.src || null) : (opts.src || null);
+  F.hobby = tx ? (tx.hobby || null) : (opts.hobby || null);
   $('autoHint').hidden = !F.auto;
   $('fAmount').value = tx ? String(tx.amount).replace('.', ',') : '';
   var date = tx ? tx.date : (presetDate || today());
@@ -1345,6 +1629,17 @@ function renderType() {
     return '<button type="button" class="chip-btn' + (c.id === F.cat ? ' on' : '') + '" data-cat="' + c.id + '" aria-pressed="' + (c.id === F.cat) + '">' + esc(c.name) + '</button>';
   }).join('');
   $('placeField').hidden = F.type === 'inc';
+  var srcs = getSources(), hobs = getHobbies();
+  $('srcField').hidden = F.type !== 'inc' || !srcs.length;
+  $('fSrcs').innerHTML = srcs.map(function (s) {
+    var on = F.src === s.id;
+    return '<button type="button" class="chip-btn' + (on ? ' on' : '') + '" data-fsrc="' + s.id + '" aria-pressed="' + on + '">' + esc(s.name) + '</button>';
+  }).join('');
+  $('hobbyField').hidden = !hobs.length;
+  $('fHobbies').innerHTML = hobs.map(function (h) {
+    var on = F.hobby === h.id;
+    return '<button type="button" class="chip-btn' + (on ? ' on' : '') + '" data-fhobby="' + h.id + '" aria-pressed="' + on + '">' + esc(h.name) + '</button>';
+  }).join('');
   renderPlaceChips();
 }
 function renderPlaceChips() {
@@ -1381,7 +1676,7 @@ function getPos() {
 }
 function geoErr(e) {
   var c = e && e.code;
-  if (IN_VIEWER && c !== 2 && c !== 3) return 'В окне Claude геолокация недоступна. Впишите место вручную или пользуйтесь установленной версией с GPS (раздел «Ещё»).';
+  if (IN_VIEWER && c !== 2 && c !== 3) return 'В окне Claude геолокация недоступна. Впишите место вручную или откройте версию с GPS: azafot.github.io/dnevnik-trat.';
   if (c === 1) return 'Доступ к геолокации запрещён. Разрешите его для этого сайта в настройках браузера.';
   if (c === 2) return 'Не удалось определить положение. Включите GPS или выйдите ближе к окну.';
   if (c === 3) return 'GPS не ответил за 15 секунд. Нажмите ещё раз.';
@@ -1413,11 +1708,7 @@ function locateHere() {
   if (hereBusy) return;
   hereBusy = true;
   getPos().then(function (p) { S.here = p; S.hereErr = null; hereBusy = false; if (S.view === 'places') renderPlaces(); })
-    .catch(function (e) {
-      hereBusy = false;
-      S.hereErr = geoErr(e);
-      if (S.view === 'places') renderPlaces();
-    });
+    .catch(function (e) { hereBusy = false; S.hereErr = geoErr(e); if (S.view === 'places') renderPlaces(); });
 }
 function submitForm(ev) {
   ev.preventDefault();
@@ -1428,7 +1719,7 @@ function submitForm(ev) {
   if (!(amount > 0)) msg = 'Введите сумму больше нуля, например 349 или 349,90.';
   else if (amount > 1e9) msg = 'Сумма слишком большая — проверьте, нет ли лишних цифр.';
   else if (!F.cat) msg = 'Выберите категорию.';
-  else if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) msg = 'Укажите дату.';
+  else if (!DATE_RE.test(date)) msg = 'Укажите дату.';
   if (msg) { err.textContent = msg; err.hidden = false; return; }
   err.hidden = true;
   var tx = clean({
@@ -1438,7 +1729,9 @@ function submitForm(ev) {
     note: $('fNote').value.trim().slice(0, 200),
     lat: F.type === 'exp' ? F.lat : null, lon: F.type === 'exp' ? F.lon : null, acc: F.type === 'exp' ? F.acc : null,
     created: F.created || Date.now(), updated: Date.now(),
-    auto: F.auto && F.type === 'inc' ? 'salary' : null
+    auto: F.auto && F.type === 'inc' ? 'salary' : null,
+    src: F.type === 'inc' ? F.src : null,
+    hobby: F.hobby
   });
   var save = $('fSave');
   save.disabled = true; save.textContent = 'Сохраняю…';
@@ -1462,10 +1755,10 @@ function deleteCurrent() {
   b.disabled = true;
   if (F.auto === 'salary' && !DEMO) {
     // запоминаем удалённую выплату, чтобы график не создал её снова
-    var sal = sanitizeSalary(REAL.settings.salary);
-    if (sal.skip.indexOf(F.id) < 0) {
-      sal.skip = sal.skip.concat([F.id]).slice(-500);
-      Store.putSettings({salary: sal}).catch(function (e) { toast(writeErr(e)); });
+    var skip = Array.isArray(REAL.settings.incomeSkip) ? REAL.settings.incomeSkip.slice() : [];
+    if (skip.indexOf(F.id) < 0) {
+      skip.push(F.id);
+      Store.putSettings({incomeSkip: skip.slice(-800)}).catch(function (e) { toast(writeErr(e)); });
     }
   }
   Store.delTx(F.id).then(function () { closeSheet(); render(); toast('Запись удалена'); })
@@ -1473,35 +1766,19 @@ function deleteCurrent() {
     .then(function () { b.disabled = false; b.textContent = 'Удалить'; });
 }
 
-/* ================= настройки и данные ================= */
-function submitSettings(ev) {
-  ev.preventDefault();
-  var vals = {};
-  var bad = '';
-  [['sBudget', 'budget', 'бюджет'], ['sGoal', 'goal', 'цель'], ['sStart', 'startBalance', 'стартовую сумму']].forEach(function (f) {
-    var raw = $(f[0]).value.trim();
-    if (!raw) { vals[f[1]] = 0; return; }
-    var v = parseAmount(raw);
-    if (!isFinite(v) || v < 0) bad = bad || 'Проверьте ' + f[2] + ': нужно число, например 45000.';
-    else vals[f[1]] = v;
-  });
-  if (bad) { $('setErr').textContent = bad; $('setErr').hidden = false; return; }
-  $('setErr').hidden = true;
-  vals.currency = $('sCur').value;
-  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  Store.putSettings(vals).then(function () { toast(DEMO ? 'Настройки демо изменены' : 'Настройки сохранены'); render(); })
-    .catch(function (e) { $('setErr').textContent = writeErr(e); $('setErr').hidden = false; });
-}
+/* ================= копия данных ================= */
 function exportJSON() {
-  var data = {app: 'dnevnik-trat', v: 1, exported: new Date().toISOString(), settings: D().settings,
+  var data = {app: 'dnevnik-trat', v: 2, exported: new Date().toISOString(), settings: D().settings,
     tx: D().tx.map(function (t) { return clean(Object.assign({}, t)); })};
   saveFile('dnevnik-trat-' + today() + '.json', JSON.stringify(data, null, 1));
 }
 function exportCSV() {
-  var rows = [['Дата', 'Время', 'Тип', 'Категория', 'Сумма', 'Место', 'Широта', 'Долгота', 'Комментарий']];
+  var srcs = getSources(), hobs = getHobbies();
+  function nameOf(list, id) { var x = list.filter(function (i) { return i.id === id; })[0]; return x ? x.name : ''; }
+  var rows = [['Дата', 'Время', 'Тип', 'Категория', 'Сумма', 'Источник', 'Хобби', 'Место', 'Широта', 'Долгота', 'Комментарий']];
   D().tx.slice().sort(function (a, b) { return (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')); }).forEach(function (t) {
     rows.push([t.date, t.time || '', t.type === 'inc' ? 'Доход' : 'Расход', cat(t.cat).name, String(t.amount).replace('.', ','),
-      t.place || '', typeof t.lat === 'number' ? t.lat : '', typeof t.lon === 'number' ? t.lon : '', t.note || '']);
+      nameOf(srcs, txSrc(t)), nameOf(hobs, t.hobby), t.place || '', typeof t.lat === 'number' ? t.lat : '', typeof t.lon === 'number' ? t.lon : '', t.note || '']);
   });
   var csv = '﻿' + rows.map(function (r) {
     return r.map(function (v) { v = String(v); return /[;"\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';');
@@ -1535,32 +1812,22 @@ function importFile(file) {
     if (!list.length) { toast('В файле нет записей.'); return; }
     toast('Загружаю ' + list.length + ' ' + plural(list.length, 'запись', 'записи', 'записей') + '…');
     var p = Store.bulkPut(list);
-    if (data && data.settings && typeof data.settings === 'object' && !Array.isArray(data)) {
+    var st = data && !Array.isArray(data) && data.settings && typeof data.settings === 'object' ? data.settings : null;
+    if (st) {
       var s = {};
-      ['budget', 'goal', 'startBalance'].forEach(function (k) { var v = Number(data.settings[k]); if (isFinite(v) && v >= 0) s[k] = v; });
-      if (typeof data.settings.currency === 'string') s.currency = data.settings.currency.slice(0, 6);
-      if (data.settings.salary && typeof data.settings.salary === 'object') s.salary = sanitizeSalary(data.settings.salary);
+      ['budget', 'goal', 'startBalance'].forEach(function (k) { var v = Number(st[k]); if (isFinite(v) && v >= 0) s[k] = v; });
+      ['budgetOn', 'savingsOn'].forEach(function (k) { if (typeof st[k] === 'boolean') s[k] = st[k]; });
+      if (typeof st.currency === 'string') s.currency = st.currency.slice(0, 6);
+      var srcs = getSources(st); if (srcs.length) s.sources = srcs;
+      var hobs = getHobbies(st); if (hobs.length) s.hobbies = hobs;
+      var skip = getSkip(st); if (skip.length) s.incomeSkip = skip.slice(-800);
       p = p.then(function () { return Store.putSettings(s); });
     }
-    p.then(function () { salDirty = false; render(); setTimeout(ensureSalary, 0); toast('Загружено: ' + list.length + ' ' + plural(list.length, 'запись', 'записи', 'записей')); })
+    p.then(function () { planDirty = false; render(); setTimeout(ensureIncome, 0); toast('Загружено: ' + list.length + ' ' + plural(list.length, 'запись', 'записи', 'записей')); })
       .catch(function (e) { toast(writeErr(e)); });
   };
   r.onerror = function () { toast('Не удалось прочитать файл.'); };
   r.readAsText(file);
-}
-function clearAll() {
-  var b = $('clearAll');
-  if (!b.dataset.armed) {
-    b.dataset.armed = '1';
-    b.textContent = 'Нажмите ещё раз: удалить ' + D().tx.length + ' ' + plural(D().tx.length, 'запись', 'записи', 'записей') + ' без возможности вернуть';
-    setTimeout(function () { if (b.dataset.armed) { delete b.dataset.armed; b.textContent = 'Удалить все записи'; } }, 5000);
-    return;
-  }
-  delete b.dataset.armed;
-  b.disabled = true; b.textContent = 'Удаляю…';
-  Store.clearAll().then(function () { toast('Все записи удалены'); render(); })
-    .catch(function (e) { toast(writeErr(e)); })
-    .then(function () { b.disabled = false; b.textContent = 'Удалить все записи'; });
 }
 
 /* ================= демо ================= */
@@ -1573,41 +1840,54 @@ function makeDemo() {
     cafe: [['Кофейня на углу', 55.75300, 37.62100], ['Столовая у работы', 55.75550, 37.61050]],
     transport: [['Метро', null, null], ['Такси', null, null], ['АЗС', 55.74020, 37.60030]],
     health: [['Аптека', 55.75200, 37.61900]], fun: [['Кинотеатр', 55.75780, 37.61500]],
-    clothes: [['Торговый центр', 55.76400, 37.60600]], household: [['Хозяйственный', 55.74700, 37.62800]]
+    clothes: [['Торговый центр', 55.76400, 37.60600]], household: [['Хозяйственный', 55.74700, 37.62800]],
+    photo: [['Фотомагазин', 55.75900, 37.62300]], bike: [['Веломастерская', 55.74600, 37.61400]]
   };
   var tx = [], now = new Date();
-  function add(y, m, d, type, c, amount, place, note) {
+  function add(y, m, d, type, c, amount, place, note, extra) {
     var t = {id: newId() + tx.length, type: type, amount: amount, cat: c, date: y + '-' + pad(m + 1) + '-' + pad(d), time: pad(8 + Math.floor(rnd() * 13)) + ':' + pad(Math.floor(rnd() * 60)), created: Date.now()};
     if (place) { t.place = place[0]; if (place[1] != null) { t.lat = place[1] + (rnd() - 0.5) * 0.0004; t.lon = place[2] + (rnd() - 0.5) * 0.0004; t.acc = 12; } }
     if (note) t.note = note;
+    if (extra) Object.assign(t, extra);
     tx.push(t);
   }
   function pick(arr) { return arr[Math.floor(rnd() * arr.length)]; }
+  var sat = new Date(now); sat.setDate(sat.getDate() - ((sat.getDay() + 1) % 7));
   for (var k = 5; k >= 0; k--) {
     var d0 = new Date(now.getFullYear(), now.getMonth() - k, 1), y = d0.getFullYear(), m = d0.getMonth();
     var last = k === 0 ? now.getDate() : new Date(y, m + 1, 0).getDate();
-    if (last >= 5) add(y, m, 5, 'inc', 'salary', 52000 + between(0, 6000, 1000), null, 'Аванс');
-    if (last >= 20) add(y, m, 20, 'inc', 'salary', 48000);
-    if (k % 2 === 0 && last >= 12) add(y, m, 12, 'inc', 'side', between(6000, 14000, 500), null, 'Чертежи на заказ');
+    if (last >= 5) add(y, m, 5, 'inc', 'salary', 55000, null, 'Основная работа · расчёт', {src: 'main', auto: 'salary'});
+    if (last >= 20) add(y, m, 20, 'inc', 'salary', 48000, null, 'Основная работа · аванс', {src: 'main', auto: 'salary'});
     add(y, m, 1, 'exp', 'home', 26000, null, 'Аренда');
     if (last >= 10) add(y, m, 10, 'exp', 'home', between(4200, 6100, 10), null, 'Коммуналка');
     if (last >= 3) add(y, m, 3, 'exp', 'comm', 890, null, 'Телефон и интернет');
+    if (k % 2 === 1 && last >= 15) add(y, m, 15, 'inc', 'side', between(2000, 6000, 500), null, 'Продал фотографии', {hobby: 'photo'});
     for (var d = 1; d <= last; d++) {
+      if (new Date(y, m, d).getDay() === 6) add(y, m, d, 'inc', 'side', 2500, null, 'Репетиторство', {src: 'tutor', auto: 'salary'});
       if (rnd() < 0.55) add(y, m, d, 'exp', 'food', between(250, 2600, 10), pick(P.food));
       if (rnd() < 0.3) add(y, m, d, 'exp', 'cafe', between(220, 1300, 10), pick(P.cafe));
       if (rnd() < 0.45) add(y, m, d, 'exp', 'transport', between(60, 650, 10), pick(P.transport));
       if (rnd() < 0.06) add(y, m, d, 'exp', 'health', between(300, 2400, 10), P.health[0]);
-      if (rnd() < 0.08) add(y, m, d, 'exp', 'fun', between(400, 2200, 50), P.fun[0]);
+      if (rnd() < 0.06) add(y, m, d, 'exp', 'fun', between(400, 2200, 50), P.fun[0]);
       if (rnd() < 0.035) add(y, m, d, 'exp', 'clothes', between(1500, 7000, 100), P.clothes[0]);
       if (rnd() < 0.05) add(y, m, d, 'exp', 'household', between(200, 1800, 10), P.household[0]);
+      if (rnd() < 0.06) add(y, m, d, 'exp', 'hobby', between(300, 2500, 50), P.photo[0], null, {hobby: 'photo'});
+      if (rnd() < 0.05) add(y, m, d, 'exp', 'hobby', between(200, 1800, 50), P.bike[0], null, {hobby: 'bike'});
     }
   }
-  return {tx: tx, settings: {currency: '₽', budget: 70000, goal: 300000, startBalance: 120000,
-    salary: {mode: 'semi', amount1: 48000, day1: 20, amount2: 55000, day2: 5, start: ymd(now)}}};
+  return {tx: tx, settings: {currency: '₽', budget: 70000, goal: 300000, startBalance: 120000, budgetOn: true, savingsOn: true,
+    sources: [
+      {id: 'main', name: 'Основная работа', cat: 'salary', on: true, mode: 'semi', amount1: 48000, day1: 20, amount2: 55000, day2: 5, start: ymd(now)},
+      {id: 'tutor', name: 'Репетиторство', cat: 'side', on: true, mode: 'custom', kind: 'interval', every: 7, anchor: ymd(sat), camount: 2500, start: ymd(now)}
+    ],
+    hobbies: [{id: 'photo', name: 'Фотография', limit: 5000}, {id: 'bike', name: 'Велосипед', limit: 3000}]}};
 }
 
 /* ================= события ================= */
-function go(view) { if (view !== 'more') salDirty = false; S.view = view; savePrefs(); render(); window.scrollTo(0, 0); }
+function go(view) {
+  if (view === 'more') view = 'inc';
+  S.view = view; savePrefs(); render(); window.scrollTo(0, 0);
+}
 function setMonth(mk) {
   S.month = mk;
   if (monthKey(S.selDay) !== mk) S.selDay = mk === monthKey(today()) ? today() : mk + '-01';
@@ -1618,13 +1898,11 @@ function bind() {
   $('mPrev').addEventListener('click', function () { setMonth(shiftMonth(S.month, -1)); });
   $('mNext').addEventListener('click', function () { setMonth(shiftMonth(S.month, 1)); });
   $('mLabel').addEventListener('click', function () { S.selDay = today(); setMonth(monthKey(today())); });
+  $('curBtn').addEventListener('click', function () { setCurMenu($('curMenu').hidden); });
   $('fab').addEventListener('click', function () { openSheet(null, S.view === 'cal' ? S.selDay : null); });
   $('dayAdd').addEventListener('click', function () { openSheet(null, S.selDay); });
-  $('demoOn').addEventListener('click', function () { DEMO = makeDemo(); S.month = monthKey(today()); S.selDay = today(); render(); toast('Открыт пример за полгода'); });
-  $('demoOff').addEventListener('click', function () { DEMO = null; salDirty = false; render(); toast('Демо закрыто'); ensureSalary(); });
-  $('salForm').addEventListener('submit', submitSalary);
-  $('salForm').addEventListener('input', function (e) { salDirty = true; if (e.target.id === 'salStart') renderSalUI(); });
-  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { render(); ensureSalary(); } });
+  $('demoOn').addEventListener('click', function () { DEMO = makeDemo(); S.month = monthKey(today()); S.selDay = today(); closeSrcForm(); resetHobbyForm(); render(); toast('Открыт пример за полгода'); });
+  $('demoOff').addEventListener('click', function () { DEMO = null; planDirty = false; closeSrcForm(); resetHobbyForm(); render(); toast('Демо закрыто'); ensureIncome(); });
   $('txForm').addEventListener('submit', submitForm);
   $('fDelete').addEventListener('click', deleteCurrent);
   $('fGeo').addEventListener('click', locateForm);
@@ -1633,43 +1911,61 @@ function bind() {
     var key = this.value.trim().toLowerCase();
     document.querySelectorAll('#placeChips .chip-btn').forEach(function (b) { b.classList.toggle('on', b.dataset.place === key); });
   });
-  $('setForm').addEventListener('submit', submitSettings);
+  $('srcAdd').addEventListener('click', function () { openSrcForm(null); });
+  $('srcCancel').addEventListener('click', closeSrcForm);
+  $('srcDelete').addEventListener('click', deleteSrc);
+  $('srcForm').addEventListener('submit', submitSrc);
+  $('srcStart').addEventListener('input', renderSrcUI);
+  $('planForm').addEventListener('submit', submitPlan);
+  $('planForm').addEventListener('input', function (e) { if (e.target.type !== 'checkbox') planDirty = true; });
+  $('budOn').addEventListener('change', function () { togglePlan('budgetOn', this.checked); });
+  $('savOn').addEventListener('change', function () { togglePlan('savingsOn', this.checked); });
+  $('hobbyForm').addEventListener('submit', submitHobby);
+  $('hobbyCancel').addEventListener('click', resetHobbyForm);
+  $('hobbyDelete').addEventListener('click', deleteHobby);
   $('expJson').addEventListener('click', exportJSON);
   $('expCsv').addEventListener('click', exportCSV);
   $('impFile').addEventListener('change', function () { importFile(this.files && this.files[0]); this.value = ''; });
-  $('clearAll').addEventListener('click', clearAll);
   $('placeList').addEventListener('toggle', function (e) {
     var d = e.target; if (!d.dataset || !d.dataset.key) return;
     if (d.open) S.openPlaces.add(d.dataset.key); else S.openPlaces.delete(d.dataset.key);
   }, true);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { render(); ensureIncome(); } });
 
   document.addEventListener('click', function (e) {
+    if (!e.target.closest('.cur-wrap') && !$('curMenu').hidden) setCurMenu(false);
     var t = e.target.closest('button, rect.hit');
     if (!t) return;
-    if (t.dataset.tab) { go(t.dataset.tab); return; }
-    if (t.dataset.goto) { go(t.dataset.goto); return; }
-    if (t.dataset.day) { S.selDay = t.dataset.day; renderCal(); return; }
-    if (t.dataset.trend) { S.trendSel = t.dataset.trend; renderTrend(); return; }
-    if (t.dataset.id) {
-      var tx = D().tx.find(function (x) { return x.id === t.dataset.id; });
+    var ds = t.dataset;
+    if (ds.cur) {
+      setCurMenu(false);
+      Store.putSettings({currency: ds.cur}).then(function () { toast('Валюта: ' + ds.cur); }).catch(function (er) { toast(writeErr(er)); });
+      return;
+    }
+    if (ds.tab) { go(ds.tab); return; }
+    if (ds.goto) { go(ds.goto); return; }
+    if (ds.day) { S.selDay = ds.day; renderCal(); return; }
+    if (ds.trend) { S.trendSel = ds.trend; renderTrend(); return; }
+    if (ds.id) {
+      var tx = D().tx.filter(function (x) { return x.id === ds.id; })[0];
       if (tx) openSheet(tx); return;
     }
     if (t.hasAttribute('data-close')) { closeSheet(); return; }
-    if (t.dataset.salmode) {
-      var savedMode = salCfg().mode;
-      SALUI.mode = t.dataset.salmode;
-      if (SALUI.mode !== savedMode) $('salStart').value = today();
-      salDirty = true; $('salErr').hidden = true; renderSalUI(); return;
+    if (ds.type) { F.type = ds.type; renderType(); return; }
+    if (ds.cat) { F.cat = ds.cat; renderType(); return; }
+    if (ds.fsrc) {
+      F.src = F.src === ds.fsrc ? null : ds.fsrc;
+      var so = getSources().filter(function (s) { return s.id === F.src; })[0];
+      if (so && !F.cat) F.cat = so.cat;
+      renderType(); return;
     }
-    if (t.dataset.wd) {
-      var w = Number(t.dataset.wd), wi = SALUI.days.indexOf(w);
-      if (wi >= 0) SALUI.days.splice(wi, 1); else SALUI.days.push(w);
-      salDirty = true; renderSalUI(); return;
+    if (ds.fhobby) {
+      F.hobby = F.hobby === ds.fhobby ? null : ds.fhobby;
+      if (F.hobby && F.type === 'exp' && !F.cat) F.cat = 'hobby';
+      renderType(); return;
     }
-    if (t.dataset.type) { F.type = t.dataset.type; renderType(); return; }
-    if (t.dataset.cat) { F.cat = t.dataset.cat; renderType(); return; }
-    if (t.dataset.place) {
-      var p = placeAgg(D().tx).find(function (x) { return x.key === t.dataset.place; });
+    if (ds.place) {
+      var p = placeAgg(D().tx).filter(function (x) { return x.key === ds.place; })[0];
       if (!p) return;
       $('fPlace').value = p.name;
       if (!F.cat && p.topCat) { F.cat = p.topCat; }
@@ -1677,12 +1973,28 @@ function bind() {
       renderType();
       return;
     }
-    if (t.dataset.scope) { S.placeScope = t.dataset.scope; savePrefs(); renderPlaces(); return; }
-    if (t.dataset.sort) { S.placeSort = t.dataset.sort; savePrefs(); renderPlaces(); return; }
+    if (ds.scope) { S.placeScope = ds.scope; savePrefs(); renderPlaces(); return; }
+    if (ds.sort) { S.placeSort = ds.sort; savePrefs(); renderPlaces(); return; }
     if (t.id === 'hereRetry') { S.here = null; S.hereErr = null; renderPlaces(); return; }
+    if (ds.srcmode && SRCUI) { SRCUI.mode = ds.srcmode; $('srcErr').hidden = true; renderSrcUI(); return; }
+    if (ds.kind && SRCUI) { SRCUI.kind = ds.kind; renderSrcUI(); return; }
+    if (ds.srccat && SRCUI) { SRCUI.cat = ds.srccat; renderSrcUI(); return; }
+    if (ds.wd && SRCUI) {
+      var w = Number(ds.wd), wi = SRCUI.days.indexOf(w);
+      if (wi >= 0) SRCUI.days.splice(wi, 1); else SRCUI.days.push(w);
+      renderSrcUI(); return;
+    }
+    if (ds.srcEdit) { var src = getSources().filter(function (s) { return s.id === ds.srcEdit; })[0]; if (src) openSrcForm(src); return; }
+    if (ds.srcToggle) { toggleSrc(ds.srcToggle); return; }
+    if (ds.hobbyAdd) { openSheet(null, S.month === monthKey(today()) ? today() : null, {type: 'exp', cat: 'hobby', hobby: ds.hobbyAdd}); return; }
+    if (ds.hobbyEdit) { editHobby(ds.hobbyEdit); return; }
   });
   document.querySelector('.scrim').addEventListener('click', closeSheet);
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (!$('curMenu').hidden) { setCurMenu(false); $('curBtn').focus(); return; }
+    if (!$('sheet').hidden) closeSheet();
+  });
 
   // свайп по календарю — смена месяца
   var sx = null, sy = null;
