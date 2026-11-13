@@ -6,7 +6,7 @@
 
 | | Страница в Claude | Установленная версия (PWA) |
 |---|---|---|
-| Где | https://claude.ai/artifact/HvtiXBwAUXAMdZYkcbB9rv | файлы из `docs/` на любом HTTPS-хостинге |
+| Где | https://claude.ai/artifact/HvtiXBwAUXAMdZYkcbB9rv | https://azafot.github.io/dnevnik-trat/ (GitHub Pages из папки `docs/`) |
 | Данные | облако Claude, личный раздел, синхронизация между устройствами | память телефона (браузер) |
 | GPS | нет: окно Claude не даёт страницам геолокацию | да |
 | Без интернета | нет | да |
@@ -20,10 +20,20 @@
   `powershell -ExecutionPolicy Bypass -File build.ps1`
 - `docs/` — готовая установочная версия.
 
-## Как разместить `docs/` (бесплатно)
+## Размещение
 
-GitHub Pages: создать репозиторий → загрузить содержимое `docs/` → Settings → Pages → Deploy from branch `main` / root.
-Адрес будет вида `https://<логин>.github.io/<репозиторий>/`. Открыть его на телефоне в Chrome или Safari →
-«Добавить на главный экран» → при первой записи с GPS разрешить геолокацию.
+Репозиторий https://github.com/AZAFOT/dnevnik-trat, GitHub Pages: ветка `main`, папка `/docs`.
+На телефоне: открыть https://azafot.github.io/dnevnik-trat/ в Chrome или Safari → «Добавить на главный экран» →
+при первой записи с GPS разрешить геолокацию.
+
+Обновить опубликованное приложение после правок `app.html`:
+
+    powershell -ExecutionPolicy Bypass -File build.ps1
+    git add -A
+    git commit -m "Обновление"
+    git push
+
+Через минуту GitHub Pages пересоберёт сайт. Чтобы телефон точно взял новую версию, в `build.ps1` поднимите
+номер кэша `dnevnik-trat-v1` → `v2`.
 
 Геолокация в браузерах работает только по HTTPS, поэтому открыть `index.html` как файл или по `http://192.168…` с GPS не получится.
