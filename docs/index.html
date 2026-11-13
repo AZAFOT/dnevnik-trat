@@ -252,6 +252,10 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 .chip-btn small{color:var(--muted);font-weight:700;margin-left:4px}
 .chip-btn.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .chip-btn.on small{color:inherit;opacity:.75}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;margin-bottom:6px;scrollbar-width:thin}
+.chips.scroll .chip-btn{flex:none}
+.chart .avg{stroke:var(--ink);stroke-width:1;stroke-dasharray:4 3;opacity:.6}
+.chart .b-exp.sel{fill:var(--ink)}
 .row2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px}
 .place-row{display:flex;gap:8px}
 .place-row input{flex:1}
@@ -329,6 +333,11 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
     <div class="kpis" id="kpiMain"></div>
     <h3 class="sec">Темп и бюджет</h3>
     <div class="kpis" id="kpiPace"></div>
+    <h3 class="sec">Траты по дням</h3>
+    <div class="chart">
+      <div class="chips scroll" id="dailyTags" aria-label="Тег для графика"></div>
+      <div id="dailyChart"></div>
+    </div>
     <h3 class="sec">Куда ушли деньги</h3>
     <div class="cats" id="cats"></div>
     <h3 class="sec">Полгода: доходы и расходы</h3>
@@ -337,7 +346,7 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
     <div class="save-box" id="savings"></div>
     <details class="card prose explain">
       <summary>Как считаются коэффициенты</summary>
-      <p>Обозначения: <b>Д</b> — доходы за месяц, <b>Р</b> — расходы за месяц, <b>Р<sub>о</sub></b> — обязательные траты (продукты, жильё, транспорт, связь, здоровье, учёба), <b>Р<sub>н</sub></b> — остальные, <b>Б</b> — бюджет месяца, <b>d</b> — прошедшие дни месяца, <b>N</b> — дней в месяце, <b>Н</b> — накопления. Все суммы в выбранной валюте.</p>
+      <p>Обозначения: <b>Д</b> — доходы за месяц, <b>Р</b> — расходы за месяц, <b>Р<sub>о</sub></b> — обязательные траты (продукты, здоровье, учёба, кредиты, ЖКХ и аренда, проездной, связь, страховка), <b>Р<sub>н</sub></b> — остальные, <b>Б</b> — бюджет месяца, <b>d</b> — прошедшие дни месяца, <b>N</b> — дней в месяце, <b>Н</b> — накопления. Все суммы в выбранной валюте.</p>
       <ul>
         <li><b>Норма сбережений</b> = (Д − Р) / Д. Ориентир 20 % и выше, по правилу 50/30/20 (Э. Уоррен, А. Уоррен-Тьяги, «All Your Worth», 2005).</li>
         <li><b>Коэффициент трат</b> = Р / Д. Больше 1 — тратите больше, чем зарабатываете.</li>
@@ -365,8 +374,8 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
     <form class="card form" id="srcForm" novalidate hidden>
       <h3 class="form-title" id="srcFormTitle">Новый источник дохода</h3>
       <label class="field"><span class="lbl">Название</span><input id="srcName" maxlength="40" placeholder="Например, основная работа" autocomplete="off"></label>
-      <div class="field"><span class="lbl">Вид дохода</span><div class="chips" id="srcCats"></div></div>
-      <div class="field"><span class="lbl">Режим выплат</span>
+      <div class="field"><span class="lbl" id="lblCats">Вид дохода</span><div class="chips" id="srcCats"></div></div>
+      <div class="field"><span class="lbl" id="lblMode">Режим выплат</span>
         <div class="seg two" id="srcMode">
           <button type="button" data-srcmode="daily">Подневная</button>
           <button type="button" data-srcmode="semi">Раз в полмесяца</button>
@@ -391,19 +400,19 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
       <div class="form" id="mMonthly" hidden>
         <div class="row2">
           <label class="field"><span class="lbl">Сумма</span><input id="srcAmount" inputmode="decimal" placeholder="Например, 85 000" autocomplete="off"></label>
-          <label class="field"><span class="lbl">День выплаты</span><input id="srcDay" type="number" min="1" max="31" inputmode="numeric"></label>
+          <label class="field"><span class="lbl" id="lblDay">День выплаты</span><input id="srcDay" type="number" min="1" max="31" inputmode="numeric"></label>
         </div>
       </div>
       <div class="form" id="mCustom" hidden>
         <div class="seg" id="srcKind"><button type="button" data-kind="interval">Через промежуток</button><button type="button" data-kind="dates">По числам месяца</button></div>
-        <label class="field"><span class="lbl">Сумма одной выплаты</span><input id="srcCAmount" inputmode="decimal" placeholder="Например, 20 000" autocomplete="off"></label>
+        <label class="field"><span class="lbl" id="lblCAmount">Сумма одной выплаты</span><input id="srcCAmount" inputmode="decimal" placeholder="Например, 20 000" autocomplete="off"></label>
         <div class="row2" id="kInterval">
-          <label class="field"><span class="lbl">Дата одной из выплат</span><input id="srcAnchor" type="date"></label>
+          <label class="field"><span class="lbl" id="lblAnchor">Дата одной из выплат</span><input id="srcAnchor" type="date"></label>
           <label class="field"><span class="lbl">Промежуток, дней</span><input id="srcEvery" type="number" min="1" max="366" inputmode="numeric" placeholder="14"></label>
         </div>
         <label class="field" id="kDates"><span class="lbl">Числа месяца через запятую</span><input id="srcDates" inputmode="decimal" placeholder="Например, 10, 25" autocomplete="off"></label>
       </div>
-      <label class="field"><span class="lbl">Записывать выплаты начиная с</span><input type="date" id="srcStart"></label>
+      <label class="field"><span class="lbl">Записывать начиная с</span><input type="date" id="srcStart"></label>
       <p class="hint" id="srcHint" style="margin:0"></p>
       <p class="err" id="srcErr" hidden></p>
       <div class="btn-row">
@@ -412,6 +421,11 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
         <button type="button" class="btn danger ghost" id="srcDelete" hidden>Удалить источник</button>
       </div>
     </form>
+
+    <h3 class="sec">Постоянные расходы</h3>
+    <p class="hint" id="billSum" style="margin:0"></p>
+    <ul class="list" id="billList"></ul>
+    <button class="btn" id="billAdd" type="button">Добавить постоянный расход</button>
 
     <h3 class="sec">Бюджет и накопления</h3>
     <form class="card form" id="planForm" novalidate>
@@ -479,7 +493,7 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
   <form class="sheet" id="txForm" novalidate role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <div class="grab" aria-hidden="true"></div>
     <div class="sheet-head"><h2 id="sheetTitle">Новая запись</h2><button type="button" class="btn small ghost" data-close>Закрыть</button></div>
-    <p class="note" id="autoHint" hidden>Записано автоматически по графику дохода. Сумму и дату можно поправить. Если запись удалить, по графику она больше не появится.</p>
+    <p class="note" id="autoHint" hidden>Записано автоматически по графику. Сумму и дату можно поправить. Если запись удалить, по графику она больше не появится.</p>
     <div class="seg" id="typeSeg"><button type="button" data-type="exp">Расход</button><button type="button" data-type="inc">Доход</button></div>
     <div class="field">
       <label class="amount" for="fAmount"><input id="fAmount" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Сумма"><span id="fCur">₽</span></label>
@@ -521,9 +535,7 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 var EXP_CATS = [
   {id:'food', name:'Продукты', ess:true},
   {id:'cafe', name:'Кафе и рестораны', ess:false},
-  {id:'transport', name:'Транспорт', ess:true},
-  {id:'home', name:'Жильё и ЖКУ', ess:true},
-  {id:'comm', name:'Связь и интернет', ess:true},
+  {id:'taxi', name:'Такси', ess:false},
   {id:'health', name:'Здоровье', ess:true},
   {id:'clothes', name:'Одежда и обувь', ess:false},
   {id:'household', name:'Дом и быт', ess:false},
@@ -531,8 +543,20 @@ var EXP_CATS = [
   {id:'hobby', name:'Хобби', ess:false},
   {id:'gifts', name:'Подарки', ess:false},
   {id:'edu', name:'Учёба', ess:true},
-  {id:'other', name:'Другое', ess:false}
+  {id:'other', name:'Другое', ess:false},
+  // постоянные расходы: записываются по графику, в быстрых тегах не показываются
+  {id:'credit', name:'Кредит', ess:true, fixed:true},
+  {id:'utilities', name:'ЖКХ и аренда', ess:true, fixed:true},
+  {id:'pass', name:'Проездной', ess:true, fixed:true},
+  {id:'comm', name:'Связь и интернет', ess:true, fixed:true},
+  {id:'subs', name:'Подписки', ess:false, fixed:true},
+  {id:'insurance', name:'Страховка', ess:true, fixed:true},
+  // теги прошлых версий: остаются только для уже сделанных записей
+  {id:'transport', name:'Транспорт', ess:true, hidden:true},
+  {id:'home', name:'Жильё и ЖКУ', ess:true, hidden:true}
 ];
+var BILL_CATS = EXP_CATS.filter(function (c) { return c.fixed; });
+function isBillCat(id) { return BILL_CATS.some(function (c) { return c.id === id; }); }
 var INC_CATS = [
   {id:'salary', name:'Зарплата'},
   {id:'side', name:'Подработка'},
@@ -638,7 +662,7 @@ function D() { return DEMO || REAL; }
 var S = {
   view: 'cal', month: monthKey(today()), selDay: today(),
   placeScope: 'month', placeSort: 'sum', here: null, hereErr: null, loaded: false,
-  sync: 'loading', syncText: 'подключаюсь к облаку…', trendSel: null, openPlaces: new Set()
+  sync: 'loading', syncText: 'подключаюсь к облаку…', trendSel: null, openPlaces: new Set(), dayTag: 'all'
 };
 var IN_VIEWER = !!(window.claude && typeof window.claude.use === 'function');
 
@@ -810,7 +834,9 @@ function cleanTx(t) {
   if (t.place) o.place = String(t.place).slice(0, 80);
   if (t.note) o.note = String(t.note).slice(0, 200);
   if (t.auto === 'salary' && type === 'inc') o.auto = 'salary';
+  if (t.auto === 'bill' && type === 'exp') o.auto = 'bill';
   if (typeof t.src === 'string' && ID_RE.test(t.src)) o.src = t.src;
+  if (typeof t.bill === 'string' && ID_RE.test(t.bill)) o.bill = t.bill;
   if (typeof t.hobby === 'string' && ID_RE.test(t.hobby)) o.hobby = t.hobby;
   if (typeof t.lat === 'number' && typeof t.lon === 'number' && isFinite(t.lat) && isFinite(t.lon)) {
     o.lat = t.lat; o.lon = t.lon;
@@ -891,13 +917,15 @@ function placeAgg(list) {
 
 /* ================= источники дохода и хобби ================= */
 var SRC_MODES = ['daily', 'semi', 'monthly', 'custom'];
-function sanitizeSource(s) {
+// isBill: постоянный расход (кредит, ЖКХ…) с тем же набором режимов, что и источник дохода
+function sanitizeSource(s, isBill) {
   if (!s || typeof s !== 'object' || typeof s.id !== 'string' || !ID_RE.test(s.id)) return null;
+  isBill = isBill === true;
   var days = Array.isArray(s.days) ? s.days.map(Number).filter(function (d) { return d >= 0 && d <= 6 && d === Math.floor(d); }) : [1, 2, 3, 4, 5];
   var dates = Array.isArray(s.dates) ? s.dates.map(Number).filter(function (d) { return d >= 1 && d <= 31 && d === Math.floor(d); }) : [];
   return {
-    id: s.id, name: String(s.name || '').trim().slice(0, 40) || 'Доход',
-    cat: isIncCat(s.cat) ? s.cat : 'salary', on: s.on !== false,
+    id: s.id, name: String(s.name || '').trim().slice(0, 40) || (isBill ? 'Расход' : 'Доход'), isBill: isBill,
+    cat: isBill ? (isBillCat(s.cat) ? s.cat : 'utilities') : (isIncCat(s.cat) ? s.cat : 'salary'), on: s.on !== false,
     mode: SRC_MODES.indexOf(s.mode) >= 0 ? s.mode : 'monthly',
     start: DATE_RE.test(s.start || '') ? s.start : '',
     rate: num0(s.rate), days: days,
@@ -912,7 +940,7 @@ function sanitizeSource(s) {
 }
 function getSources(st) {
   st = st || D().settings;
-  if (Array.isArray(st.sources)) return st.sources.map(sanitizeSource).filter(Boolean);
+  if (Array.isArray(st.sources)) return st.sources.map(function (x) { return sanitizeSource(x, false); }).filter(Boolean);
   var lg = st.salary;
   // перенос графика зарплаты из прошлой версии
   if (lg && typeof lg === 'object' && ['daily', 'semi', 'monthly'].indexOf(lg.mode) >= 0) {
@@ -920,6 +948,10 @@ function getSources(st) {
     return s ? [s] : [];
   }
   return [];
+}
+function getBills(st) {
+  st = st || D().settings;
+  return Array.isArray(st.bills) ? st.bills.map(function (x) { return sanitizeSource(x, true); }).filter(Boolean) : [];
 }
 function getSkip(st) {
   st = st || D().settings;
@@ -933,7 +965,7 @@ function sanitizeHobby(h) {
 }
 function getHobbies(st) { st = st || D().settings; return Array.isArray(st.hobbies) ? st.hobbies.map(sanitizeHobby).filter(Boolean) : []; }
 function txSrc(t) { return t.src || (t.auto === 'salary' ? 'main' : null); }
-function srcPrefix(src) { return src.id === 'main' ? 'sal' : 'inc-' + src.id; }
+function srcPrefix(src) { return src.isBill ? 'exp-' + src.id : (src.id === 'main' ? 'sal' : 'inc-' + src.id); }
 // все выплаты источника в месяце; id детерминированный, поэтому дублей не бывает
 function payDates(src, mk) {
   var N = daysIn(mk), out = [], P = srcPrefix(src), d, ds;
@@ -956,10 +988,10 @@ function payDates(src, mk) {
   }
   return out.sort(function (x, y) { return x.date.localeCompare(y.date); });
 }
-// будущие выплаты месяца по активным источникам (ещё не записанные)
-function plannedIn(mk) {
+// будущие выплаты (или списания, bills = true) месяца по активным графикам, ещё не записанные
+function plannedIn(mk, bills) {
   var td = today(), skip = new Set(getSkip()), have = new Set(D().tx.map(function (t) { return t.id; })), out = [];
-  getSources().filter(function (s) { return s.on; }).forEach(function (src) {
+  (bills ? getBills() : getSources()).filter(function (s) { return s.on; }).forEach(function (src) {
     var start = src.start || td;
     payDates(src, mk).forEach(function (p) { if (p.date > td && p.date >= start && !have.has(p.id) && !skip.has(p.id)) out.push(p); });
   });
@@ -982,7 +1014,7 @@ var incomeBusy = false;
 // дописывает выплаты, дата которых наступила: при запуске, после изменения источников и при возврате в приложение
 function ensureIncome() {
   if (DEMO || incomeBusy || !Store.ready()) return;
-  var srcs = getSources(REAL.settings).filter(function (s) { return s.on; });
+  var srcs = getSources(REAL.settings).concat(getBills(REAL.settings)).filter(function (s) { return s.on; });
   if (!srcs.length) return;
   var td = today(), have = new Set(REAL.tx.map(function (t) { return t.id; })), skip = new Set(getSkip(REAL.settings)), todo = [];
   srcs.forEach(function (src) {
@@ -993,7 +1025,9 @@ function ensureIncome() {
       payDates(src, mk).forEach(function (p) {
         if (p.date >= start && p.date <= td && !have.has(p.id) && !skip.has(p.id)) {
           have.add(p.id);
-          todo.push({id: p.id, type: 'inc', amount: p.amount, cat: src.cat, date: p.date, note: p.note, auto: 'salary', src: src.id, created: Date.now()});
+          todo.push(src.isBill
+            ? {id: p.id, type: 'exp', amount: p.amount, cat: src.cat, date: p.date, note: p.note, auto: 'bill', bill: src.id, created: Date.now()}
+            : {id: p.id, type: 'inc', amount: p.amount, cat: src.cat, date: p.date, note: p.note, auto: 'salary', src: src.id, created: Date.now()});
         }
       });
       mk = shiftMonth(mk, 1);
@@ -1001,11 +1035,10 @@ function ensureIncome() {
   });
   if (!todo.length) return;
   if (todo.length > 400) todo = todo.slice(-400);
-  var sum = todo.reduce(function (a, t) { return a + t.amount; }, 0);
   incomeBusy = true;
   Store.bulkPut(todo).then(function () {
-    toast(todo.length === 1 ? 'Записано по графику: ' + todo[0].note + ' +' + money(sum, true)
-      : 'Записано выплат по графику: ' + todo.length + ' на ' + money(sum, true));
+    toast(todo.length === 1 ? 'Записано по графику: ' + todo[0].note + ' ' + (todo[0].type === 'inc' ? '+' : '−') + money(todo[0].amount, true)
+      : 'Записано по графику: ' + todo.length + ' ' + plural(todo.length, 'запись', 'записи', 'записей'));
     render();
   }).catch(function (e) { toast(writeErr(e)); }).then(function () { incomeBusy = false; });
 }
@@ -1023,19 +1056,30 @@ function srcDesc(s) {
   var ev = s.every === 1 ? 'каждый день' : plural(s.every, 'каждый ', 'каждые ', 'каждые ') + s.every + ' ' + plural(s.every, 'день', 'дня', 'дней');
   return 'Настраиваемый: ' + ev + ' по ' + money(s.camount, true) + (s.anchor ? ', отсчёт от ' + fmtDayShort(s.anchor) : '');
 }
-function incomeLineHTML(mk) {
-  var srcs = getSources().filter(function (s) { return s.on; });
-  if (!srcs.length) return '';
+function schedSummary(list, mk) {
   var skip = new Set(getSkip()), sched = 0, nxt = null;
-  srcs.forEach(function (src) {
+  list.filter(function (s) { return s.on; }).forEach(function (src) {
     payDates(src, mk).forEach(function (p) { if (!skip.has(p.id)) sched += p.amount; });
     var p = nextFor(src);
     if (p && (!nxt || p.date < nxt.date)) nxt = p;
   });
-  var line1 = 'Доход по графику за ' + monthName(mk).toLowerCase() + ': ' + money(sched, true) + ' · ' + srcs.length + ' ' + plural(srcs.length, 'источник', 'источника', 'источников');
-  var line2 = nxt ? 'Следующая выплата: ' + fmtDayShort(nxt.date) + ', ' + esc(nxt.note) + ' +' + money(nxt.amount, true) : '';
-  return '<div class="sal-line"><span>' + line1 + '</span>' + (line2 ? '<span class="muted">' + line2 + '</span>' : '') +
-    '<button type="button" class="link" data-goto="inc">Источники дохода</button></div>';
+  return {sched: sched, next: nxt};
+}
+function incomeLineHTML(mk) {
+  var srcs = getSources().filter(function (s) { return s.on; }), bills = getBills().filter(function (s) { return s.on; });
+  if (!srcs.length && !bills.length) return '';
+  var mname = monthName(mk).toLowerCase(), lines = [];
+  if (srcs.length) {
+    var a = schedSummary(srcs, mk);
+    lines.push('<span>Доход по графику за ' + mname + ': ' + money(a.sched, true) + '</span>');
+    if (a.next) lines.push('<span class="muted">Следующая выплата: ' + fmtDayShort(a.next.date) + ', ' + esc(a.next.note) + ' +' + money(a.next.amount, true) + '</span>');
+  }
+  if (bills.length) {
+    var b = schedSummary(bills, mk);
+    lines.push('<span>Постоянные расходы за ' + mname + ': ' + money(b.sched, true) + '</span>');
+    if (b.next) lines.push('<span class="muted">Следующее списание: ' + fmtDayShort(b.next.date) + ', ' + esc(b.next.note) + ' −' + money(b.next.amount, true) + '</span>');
+  }
+  return '<div class="sal-line">' + lines.join('') + '<button type="button" class="link" data-goto="inc">Доходы и постоянные расходы</button></div>';
 }
 
 /* ================= статусы ================= */
@@ -1210,6 +1254,7 @@ function renderSum() {
     }).join('');
   }
   renderTrend();
+  renderDaily();
 
   var so = savOn();
   $('savSec').hidden = !so; $('savings').hidden = !so;
@@ -1271,6 +1316,58 @@ function renderTrend() {
   var s = data[months.indexOf(sel)];
   $('trend').innerHTML = '<div class="legend"><span><i style="background:var(--inc)"></i>Доходы</span><span><i style="background:var(--exp)"></i>Расходы</span><span>нажмите на месяц</span></div>' + svg +
     '<div class="chart-cap"><b>' + monthTitle(s.mk) + '</b><span>доходы ' + money(s.inc, true) + '</span><span>расходы ' + money(s.exp, true) + '</span><span>остаток ' + signed(s.bal, true) + '</span></div>';
+}
+
+// столбики трат за каждый день месяца: все траты или один тег; нажатие на день открывает его в календаре
+function renderDaily() {
+  var mk = S.month, N = daysIn(mk), td = today();
+  var list = monthTx(mk).filter(function (t) { return t.type !== 'inc'; });
+  var byCat = {}, total = 0;
+  list.forEach(function (t) { var a = Number(t.amount) || 0; byCat[t.cat] = (byCat[t.cat] || 0) + a; total += a; });
+  var tags = Object.keys(byCat).sort(function (a, b) { return byCat[b] - byCat[a]; });
+  var varTotal = 0;
+  list.forEach(function (t) { if (!cat(t.cat).fixed) varTotal += Number(t.amount) || 0; });
+  var hasFixed = varTotal < total;
+  if (S.dayTag !== 'all' && !(S.dayTag === 'var' && hasFixed) && tags.indexOf(S.dayTag) < 0) S.dayTag = 'all';
+  function chip(id, name, v) {
+    var on = S.dayTag === id;
+    return '<button type="button" class="chip-btn' + (on ? ' on' : '') + '" data-daytag="' + id + '" aria-pressed="' + on + '">' + esc(name) + '<small>' + compact(v) + '</small></button>';
+  }
+  $('dailyTags').innerHTML = chip('all', 'Все траты', total) + (hasFixed ? chip('var', 'Без постоянных', varTotal) : '') + tags.map(function (id) { return chip(id, cat(id).name, byCat[id]); }).join('');
+  var vals = [], d;
+  for (d = 0; d <= N; d++) vals.push(0);
+  list.forEach(function (t) {
+    if (S.dayTag === 'all' || t.cat === S.dayTag || (S.dayTag === 'var' && !cat(t.cat).fixed)) vals[Number(t.date.slice(8, 10))] += Number(t.amount) || 0;
+  });
+  var sum = 0, top = 0, topDay = 0;
+  for (d = 1; d <= N; d++) { sum += vals[d]; if (vals[d] > top) { top = vals[d]; topDay = d; } }
+  var el = elapsedIn(mk), avg = el > 0 ? sum / el : 0;
+  var max = niceMax(top);
+  var W = 340, H = 176, L = 36, R = 4, T = 10, B = 24, pw = W - L - R, ph = H - T - B, base = T + ph;
+  var cw = pw / N, bw = Math.max(2, Math.min(14, cw - 2));
+  var name = S.dayTag === 'all' ? 'Все траты' : (S.dayTag === 'var' ? 'Без постоянных' : cat(S.dayTag).name);
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Траты по дням, ' + esc(name) + ', ' + monthTitle(mk) + '">';
+  [0, 0.5, 1].forEach(function (f) {
+    var yy = (T + ph * (1 - f)).toFixed(1);
+    svg += '<line class="' + (f === 0 ? 'ax' : 'gl') + '" x1="' + L + '" x2="' + (W - R) + '" y1="' + yy + '" y2="' + yy + '"/>' +
+      '<text x="' + (L - 5) + '" y="' + (Number(yy) + 3.5) + '" text-anchor="end">' + (f === 0 ? '0' : compact(max * f)) + '</text>';
+  });
+  for (d = 1; d <= N; d++) {
+    var key = mk + '-' + pad(d), x = L + (d - 1) * cw, cx = x + cw / 2;
+    if (key === S.selDay) svg += '<rect class="band" x="' + x.toFixed(1) + '" y="' + T + '" width="' + cw.toFixed(1) + '" height="' + ph + '" rx="3"/>';
+    svg += '<path class="b-exp' + (key === S.selDay ? ' sel' : '') + '" d="' + barPath(+(cx - bw / 2).toFixed(1), base, bw, vals[d] / max * ph) + '"/>';
+    if (d === 1 || d % 5 === 0 || key === td) svg += '<text x="' + cx.toFixed(1) + '" y="' + (H - 7) + '" text-anchor="middle" class="' + (key === td ? 'on' : '') + '">' + d + '</text>';
+  }
+  if (avg > 0) { var ya = (base - avg / max * ph).toFixed(1); svg += '<line class="avg" x1="' + L + '" x2="' + (W - R) + '" y1="' + ya + '" y2="' + ya + '"/>'; }
+  for (d = 1; d <= N; d++) {
+    var k2 = mk + '-' + pad(d);
+    svg += '<rect class="hit" data-gotoday="' + k2 + '" x="' + (L + (d - 1) * cw).toFixed(1) + '" y="0" width="' + cw.toFixed(1) + '" height="' + H + '"><title>' + d + ' ' + MONTHS_GEN[Number(mk.slice(5)) - 1] + ': ' + money(vals[d], true) + '</title></rect>';
+  }
+  svg += '</svg>';
+  $('dailyChart').innerHTML = '<div class="legend"><span><i style="background:var(--exp)"></i>' + esc(name) + ' за день</span>' +
+    (avg > 0 ? '<span><i style="background:none;border-top:2px dashed var(--ink);border-radius:0;height:0;vertical-align:3px"></i>в среднем ' + money(avg, true) + '</span>' : '') + '</div>' + svg +
+    '<div class="chart-cap"><span>Всего <b>' + money(sum, true) + '</b></span>' + (top > 0 ? '<span>больше всего ' + topDay + ' ' + MONTHS_GEN[Number(mk.slice(5)) - 1] + ': ' + money(top, true) + '</span>' : '') +
+    '<span class="muted">Нажмите на день — откроются его траты</span></div>';
 }
 
 function renderPlaces() {
@@ -1345,6 +1442,20 @@ function renderInc() {
       '<div class="btn-row"><button type="button" class="btn small" data-src-edit="' + s.id + '">Изменить</button>' +
       '<button type="button" class="btn small ghost" data-src-toggle="' + s.id + '">' + (s.on ? 'Поставить на паузу' : 'Включить') + '</button></div></li>';
   }).join('') + (none > 0 ? '<li class="card"><div class="src-top"><b>Без источника</b><span class="cat-amt">' + money(none, true) + '</span></div><div class="hint">Доходы за ' + mname + ', записанные без выбора источника.</div></li>' : '');
+
+  var bills = getBills(), byBill = {}, paid = 0;
+  monthTx(mk).forEach(function (t) { if (t.type !== 'inc' && t.bill) { var a = Number(t.amount) || 0; byBill[t.bill] = (byBill[t.bill] || 0) + a; paid += a; } });
+  var bs = schedSummary(bills, mk);
+  $('billSum').textContent = bills.length ? 'По графику за ' + mname + ': ' + money(bs.sched, true) + ', уже записано ' + money(paid, true) + '.' : '';
+  $('billList').innerHTML = bills.length ? bills.map(function (s) {
+    var nx = s.on ? nextFor(s) : null;
+    return '<li class="card"><div class="src-top"><b>' + esc(s.name) + '</b><span class="st ' + (s.on ? 'good' : 'na') + '">' + (s.on ? 'активен' : 'на паузе') + '</span></div>' +
+      '<div class="hint">' + esc(cat(s.cat).name) + ' · ' + srcDesc(s) + '</div>' +
+      '<div class="save-row"><span>Записано за ' + mname + '</span><b>' + money(byBill[s.id] || 0, true) + '</b></div>' +
+      (nx ? '<div class="hint">Следующее списание: ' + fmtDayShort(nx.date) + ', −' + money(nx.amount, true) + '</div>' : '') +
+      '<div class="btn-row"><button type="button" class="btn small" data-bill-edit="' + s.id + '">Изменить</button>' +
+      '<button type="button" class="btn small ghost" data-bill-toggle="' + s.id + '">' + (s.on ? 'Поставить на паузу' : 'Включить') + '</button></div></li>';
+  }).join('') : '<li class="card muted">Кредит, ЖКХ, аренда, проездной, связь, подписки: добавьте их один раз, и в день списания трата запишется сама.</li>';
 
   renderPlanForm();
 
@@ -1426,13 +1537,23 @@ var SRCUI = null;
 var SRC_HINTS = {
   daily: 'В каждый отмеченный день доход запишется сам. Не работали — удалите запись этого дня в календаре: она больше не появится.',
   semi: 'Аванс и расчёт запишутся сами в дни выплат. По ТК РФ (ст. 136) зарплату платят не реже чем каждые полмесяца.',
-  monthly: 'Выплата запишется сама. Если такого числа в месяце нет (например, 31-го), запись будет в последний день месяца.',
-  interval: 'Выплата запишется каждые N дней, считая от указанной даты. Раз в две недели — промежуток 14, раз в неделю — 7.',
-  dates: 'Выплата запишется в каждое из указанных чисел. Например, «10, 25» или «1, 11, 21». 31-е в коротком месяце станет последним днём.'
+  monthly: 'Запись появится сама в указанный день. Если такого числа в месяце нет (например, 31-го), запись будет в последний день месяца.',
+  interval: 'Запись появится каждые N дней, считая от указанной даты. Раз в две недели — промежуток 14, раз в неделю — 7.',
+  dates: 'Запись появится в каждое из указанных чисел. Например, «10, 25» или «1, 11, 21». 31-е в коротком месяце станет последним днём.'
 };
-function openSrcForm(src) {
-  var s = src || sanitizeSource({id: 'new', name: '', mode: 'semi', cat: 'salary'});
-  SRCUI = {id: src ? src.id : null, mode: s.mode, days: s.days.slice(), kind: s.kind, cat: s.cat, on: src ? src.on : true};
+// одна форма на источники дохода (bill = false) и постоянные расходы (bill = true)
+function openSrcForm(src, bill) {
+  bill = !!bill;
+  var s = src || sanitizeSource(bill ? {id: 'new', name: '', mode: 'monthly', cat: 'utilities', day: 10} : {id: 'new', name: '', mode: 'semi', cat: 'salary'}, bill);
+  SRCUI = {id: src ? src.id : null, bill: bill, mode: s.mode, days: s.days.slice(), kind: s.kind, cat: s.cat, on: src ? src.on : true};
+  $(bill ? 'billAdd' : 'srcAdd').after($('srcForm'));
+  $('srcName').placeholder = bill ? 'Например, кредит за ноутбук' : 'Например, основная работа';
+  $('lblCats').textContent = bill ? 'Вид расхода' : 'Вид дохода';
+  $('lblMode').textContent = bill ? 'Режим списаний' : 'Режим выплат';
+  $('lblDay').textContent = bill ? 'День списания' : 'День выплаты';
+  $('lblCAmount').textContent = bill ? 'Сумма одного списания' : 'Сумма одной выплаты';
+  $('lblAnchor').textContent = bill ? 'Дата одного из списаний' : 'Дата одной из выплат';
+  document.querySelectorAll('#srcMode button').forEach(function (b) { b.hidden = bill && (b.dataset.srcmode === 'daily' || b.dataset.srcmode === 'semi'); });
   $('srcName').value = src ? src.name : '';
   $('srcRate').value = s.rate ? NF.format(s.rate) : '';
   $('srcA1').value = s.amount1 ? NF.format(s.amount1) : ''; $('srcD1').value = s.day1;
@@ -1442,14 +1563,14 @@ function openSrcForm(src) {
   $('srcEvery').value = s.every; $('srcAnchor').value = s.anchor || today();
   $('srcDates').value = s.dates.join(', ');
   $('srcStart').value = src ? (s.start || today()) : today();
-  $('srcFormTitle').textContent = src ? 'Изменить источник' : 'Новый источник дохода';
-  var del = $('srcDelete'); del.hidden = !src; delete del.dataset.armed; del.textContent = 'Удалить источник';
+  $('srcFormTitle').textContent = bill ? (src ? 'Изменить постоянный расход' : 'Новый постоянный расход') : (src ? 'Изменить источник' : 'Новый источник дохода');
+  var del = $('srcDelete'); del.hidden = !src; delete del.dataset.armed; del.textContent = 'Удалить';
   $('srcErr').hidden = true;
-  $('srcForm').hidden = false; $('srcAdd').hidden = true;
+  $('srcForm').hidden = false; $('srcAdd').hidden = !bill; $('billAdd').hidden = bill;
   renderSrcUI();
   try { $('srcForm').scrollIntoView({block: 'start', behavior: 'smooth'}); } catch (e) {}
 }
-function closeSrcForm() { $('srcForm').hidden = true; $('srcAdd').hidden = false; SRCUI = null; }
+function closeSrcForm() { $('srcForm').hidden = true; $('srcAdd').hidden = false; $('billAdd').hidden = false; SRCUI = null; }
 function renderSrcUI() {
   if (!SRCUI) return;
   var m = SRCUI.mode;
@@ -1457,7 +1578,7 @@ function renderSrcUI() {
   document.querySelectorAll('#srcKind button').forEach(function (b) { var on = b.dataset.kind === SRCUI.kind; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   $('mDaily').hidden = m !== 'daily'; $('mSemi').hidden = m !== 'semi'; $('mMonthly').hidden = m !== 'monthly'; $('mCustom').hidden = m !== 'custom';
   $('kInterval').hidden = SRCUI.kind !== 'interval'; $('kDates').hidden = SRCUI.kind !== 'dates';
-  $('srcCats').innerHTML = INC_CATS.map(function (c) {
+  $('srcCats').innerHTML = (SRCUI.bill ? BILL_CATS : INC_CATS).map(function (c) {
     var on = c.id === SRCUI.cat;
     return '<button type="button" class="chip-btn' + (on ? ' on' : '') + '" data-srccat="' + c.id + '" aria-pressed="' + on + '">' + esc(c.name) + '</button>';
   }).join('');
@@ -1473,33 +1594,33 @@ function renderSrcUI() {
 function submitSrc(ev) {
   ev.preventDefault();
   if (!SRCUI) return;
-  var err = '', list = getSources();
+  var bill = SRCUI.bill, err = '', list = bill ? getBills() : getSources();
   var old = SRCUI.id ? list.filter(function (s) { return s.id === SRCUI.id; })[0] : null;
-  var o = Object.assign({}, old || {}, {id: SRCUI.id || shortId('s'), name: $('srcName').value.trim(), cat: SRCUI.cat, on: SRCUI.on,
+  var o = Object.assign({}, old || {}, {id: SRCUI.id || shortId(bill ? 'b' : 's'), name: $('srcName').value.trim(), cat: SRCUI.cat, on: SRCUI.on,
     mode: SRCUI.mode, days: SRCUI.days.slice().sort(), kind: SRCUI.kind});
-  if (!o.name) err = 'Введите название, например «Основная работа».';
+  if (!o.name) err = bill ? 'Введите название, например «Кредит» или «Коммуналка».' : 'Введите название, например «Основная работа».';
   function amt(id, label) { var v = parseAmount($(id).value); if (!(v > 0)) { err = err || 'Укажите ' + label + ': число больше нуля.'; return 0; } return v; }
   function day(id, label) { var v = Math.round(Number($(id).value)); if (!(v >= 1 && v <= 31)) { err = err || label + ' — число от 1 до 31.'; return 1; } return v; }
   if (o.mode === 'daily') { o.rate = amt('srcRate', 'оплату за день'); if (!o.days.length) err = err || 'Отметьте хотя бы один рабочий день.'; }
   if (o.mode === 'semi') { o.amount1 = amt('srcA1', 'сумму аванса'); o.day1 = day('srcD1', 'День аванса'); o.amount2 = amt('srcA2', 'сумму расчёта'); o.day2 = day('srcD2', 'День расчёта'); }
-  if (o.mode === 'monthly') { o.amount = amt('srcAmount', 'сумму выплаты'); o.day = day('srcDay', 'День выплаты'); }
+  if (o.mode === 'monthly') { o.amount = amt('srcAmount', 'сумму'); o.day = day('srcDay', bill ? 'День списания' : 'День выплаты'); }
   if (o.mode === 'custom') {
-    o.camount = amt('srcCAmount', 'сумму одной выплаты');
+    o.camount = amt('srcCAmount', bill ? 'сумму одного списания' : 'сумму одной выплаты');
     if (o.kind === 'interval') {
       var ev2 = Math.round(Number($('srcEvery').value));
       if (!(ev2 >= 1 && ev2 <= 366)) err = err || 'Промежуток — число дней от 1 до 366.'; else o.every = ev2;
       var an = $('srcAnchor').value;
-      if (!DATE_RE.test(an)) err = err || 'Укажите дату одной из выплат, от неё пойдёт отсчёт.'; else o.anchor = an;
+      if (!DATE_RE.test(an)) err = err || 'Укажите дату, от которой пойдёт отсчёт.'; else o.anchor = an;
     } else {
       var ds = String($('srcDates').value).split(/[^0-9]+/).filter(Boolean).map(Number).filter(function (d) { return d >= 1 && d <= 31; });
       if (!ds.length) err = err || 'Укажите числа месяца через запятую, например 10, 25.'; else o.dates = ds;
     }
   }
   var st = $('srcStart').value;
-  if (!DATE_RE.test(st)) err = err || 'Укажите, с какой даты записывать выплаты.'; else o.start = st;
+  if (!DATE_RE.test(st)) err = err || 'Укажите, с какой даты делать записи.'; else o.start = st;
   if (err) { $('srcErr').textContent = err; $('srcErr').hidden = false; return; }
   $('srcErr').hidden = true;
-  var clean1 = sanitizeSource(o);
+  var clean1 = sanitizeSource(o, bill);
   if (old) {
     // график изменился, а дату начала не трогали: пишем по новому графику только с сегодняшнего дня, без дублей за прошлые дни
     var changed = ['mode', 'kind', 'every', 'anchor', 'dates', 'day', 'day1', 'day2', 'days'].some(function (k) { return JSON.stringify(old[k]) !== JSON.stringify(clean1[k]); });
@@ -1508,32 +1629,33 @@ function submitSrc(ev) {
   var i = list.map(function (s) { return s.id; }).indexOf(clean1.id);
   if (i >= 0) list[i] = clean1; else list.push(clean1);
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  Store.putSettings({sources: list}).then(function () {
+  Store.putSettings(bill ? {bills: list} : {sources: list}).then(function () {
     closeSrcForm(); render();
-    toast(DEMO ? 'Изменено в демо' : 'Источник «' + clean1.name + '» сохранён');
+    toast(DEMO ? 'Изменено в демо' : '«' + clean1.name + '» сохранено');
     ensureIncome();
   }).catch(function (e) { $('srcErr').textContent = writeErr(e); $('srcErr').hidden = false; });
 }
-function toggleSrc(id) {
-  var list = getSources(), s = list.filter(function (x) { return x.id === id; })[0];
+function toggleSrc(id, bill) {
+  var list = bill ? getBills() : getSources(), s = list.filter(function (x) { return x.id === id; })[0];
   if (!s) return;
   s.on = !s.on;
-  if (s.on) s.start = today(); // за время паузы выплаты не дописываются
-  Store.putSettings({sources: list}).then(function () { toast(s.on ? 'Источник снова активен' : 'Источник на паузе: выплаты не записываются'); ensureIncome(); })
+  if (s.on) s.start = today(); // за время паузы записи не дописываются
+  Store.putSettings(bill ? {bills: list} : {sources: list}).then(function () { toast(s.on ? '«' + s.name + '» снова активно' : '«' + s.name + '» на паузе: по графику не записывается'); ensureIncome(); })
     .catch(function (e) { toast(writeErr(e)); });
 }
 function deleteSrc() {
   var b = $('srcDelete');
   if (!b.dataset.armed) {
     b.dataset.armed = '1'; b.textContent = 'Точно удалить?';
-    setTimeout(function () { if (b.dataset.armed) { delete b.dataset.armed; b.textContent = 'Удалить источник'; } }, 3500);
+    setTimeout(function () { if (b.dataset.armed) { delete b.dataset.armed; b.textContent = 'Удалить'; } }, 3500);
     return;
   }
   delete b.dataset.armed;
-  var id = SRCUI && SRCUI.id;
+  var id = SRCUI && SRCUI.id, bill = SRCUI && SRCUI.bill;
   if (!id) return;
-  Store.putSettings({sources: getSources().filter(function (s) { return s.id !== id; })}).then(function () {
-    closeSrcForm(); render(); toast('Источник удалён. Записанные выплаты остались в календаре.');
+  var rest = (bill ? getBills() : getSources()).filter(function (s) { return s.id !== id; });
+  Store.putSettings(bill ? {bills: rest} : {sources: rest}).then(function () {
+    closeSrcForm(); render(); toast('Удалено. Уже сделанные записи остались в календаре.');
   }).catch(function (e) { toast(writeErr(e)); });
 }
 
@@ -1584,7 +1706,7 @@ function deleteHobby() {
 }
 
 /* ================= форма записи ================= */
-var F = {id: null, type: 'exp', cat: null, lat: null, lon: null, acc: null, created: null, auto: null, src: null, hobby: null};
+var F = {id: null, type: 'exp', cat: null, lat: null, lon: null, acc: null, created: null, auto: null, src: null, hobby: null, bill: null};
 function openSheet(tx, presetDate, opts) {
   opts = opts || {};
   F.id = tx ? tx.id : null;
@@ -1594,7 +1716,8 @@ function openSheet(tx, presetDate, opts) {
   F.lon = tx && typeof tx.lon === 'number' ? tx.lon : null;
   F.acc = tx && typeof tx.acc === 'number' ? tx.acc : null;
   F.created = tx ? tx.created : null;
-  F.auto = tx && tx.auto === 'salary' ? 'salary' : null;
+  F.auto = tx && (tx.auto === 'salary' || tx.auto === 'bill') ? tx.auto : null;
+  F.bill = tx ? (tx.bill || null) : null;
   F.src = tx ? (tx.src || null) : (opts.src || null);
   F.hobby = tx ? (tx.hobby || null) : (opts.hobby || null);
   $('autoHint').hidden = !F.auto;
@@ -1624,7 +1747,8 @@ function closeSheet() {
 }
 function renderType() {
   document.querySelectorAll('#typeSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.type === F.type); });
-  var cats = F.type === 'inc' ? INC_CATS : EXP_CATS;
+  // постоянные и старые теги в быстрых кнопках не показываем, кроме тега уже открытой записи
+  var cats = F.type === 'inc' ? INC_CATS : EXP_CATS.filter(function (c) { return (!c.fixed && !c.hidden) || c.id === F.cat; });
   if (F.cat && !cats.some(function (c) { return c.id === F.cat; })) F.cat = null;
   $('fCats').innerHTML = cats.map(function (c) {
     return '<button type="button" class="chip-btn' + (c.id === F.cat ? ' on' : '') + '" data-cat="' + c.id + '" aria-pressed="' + (c.id === F.cat) + '">' + esc(c.name) + '</button>';
@@ -1730,8 +1854,9 @@ function submitForm(ev) {
     note: $('fNote').value.trim().slice(0, 200),
     lat: F.type === 'exp' ? F.lat : null, lon: F.type === 'exp' ? F.lon : null, acc: F.type === 'exp' ? F.acc : null,
     created: F.created || Date.now(), updated: Date.now(),
-    auto: F.auto && F.type === 'inc' ? 'salary' : null,
+    auto: F.auto === 'salary' && F.type === 'inc' ? 'salary' : (F.auto === 'bill' && F.type === 'exp' ? 'bill' : null),
     src: F.type === 'inc' ? F.src : null,
+    bill: F.type === 'exp' ? F.bill : null,
     hobby: F.hobby
   });
   var save = $('fSave');
@@ -1754,7 +1879,7 @@ function deleteCurrent() {
   }
   delete b.dataset.armed;
   b.disabled = true;
-  if (F.auto === 'salary' && !DEMO) {
+  if (F.auto && !DEMO) {
     // запоминаем удалённую выплату, чтобы график не создал её снова
     var skip = Array.isArray(REAL.settings.incomeSkip) ? REAL.settings.incomeSkip.slice() : [];
     if (skip.indexOf(F.id) < 0) {
@@ -1821,6 +1946,7 @@ function importFile(file) {
       if (typeof st.currency === 'string') s.currency = st.currency.slice(0, 6);
       var srcs = getSources(st); if (srcs.length) s.sources = srcs;
       var hobs = getHobbies(st); if (hobs.length) s.hobbies = hobs;
+      var bls = getBills(st); if (bls.length) s.bills = bls;
       var skip = getSkip(st); if (skip.length) s.incomeSkip = skip.slice(-800);
       p = p.then(function () { return Store.putSettings(s); });
     }
@@ -1859,15 +1985,17 @@ function makeDemo() {
     var last = k === 0 ? now.getDate() : new Date(y, m + 1, 0).getDate();
     if (last >= 5) add(y, m, 5, 'inc', 'salary', 55000, null, 'Основная работа · расчёт', {src: 'main', auto: 'salary'});
     if (last >= 20) add(y, m, 20, 'inc', 'salary', 48000, null, 'Основная работа · аванс', {src: 'main', auto: 'salary'});
-    add(y, m, 1, 'exp', 'home', 26000, null, 'Аренда');
-    if (last >= 10) add(y, m, 10, 'exp', 'home', between(4200, 6100, 10), null, 'Коммуналка');
-    if (last >= 3) add(y, m, 3, 'exp', 'comm', 890, null, 'Телефон и интернет');
+    add(y, m, 1, 'exp', 'utilities', 26000, null, 'Аренда квартиры', {bill: 'rent', auto: 'bill'});
+    add(y, m, 1, 'exp', 'pass', 2900, null, 'Проездной', {bill: 'pass', auto: 'bill'});
+    if (last >= 3) add(y, m, 3, 'exp', 'comm', 890, null, 'Телефон и интернет', {bill: 'net', auto: 'bill'});
+    if (last >= 10) add(y, m, 10, 'exp', 'utilities', 5200, null, 'Коммуналка', {bill: 'zhkh', auto: 'bill'});
+    if (last >= 15) add(y, m, 15, 'exp', 'credit', 12000, null, 'Кредит за ноутбук', {bill: 'credit', auto: 'bill'});
     if (k % 2 === 1 && last >= 15) add(y, m, 15, 'inc', 'side', between(2000, 6000, 500), null, 'Продал фотографии', {hobby: 'photo'});
     for (var d = 1; d <= last; d++) {
       if (new Date(y, m, d).getDay() === 6) add(y, m, d, 'inc', 'side', 2500, null, 'Репетиторство', {src: 'tutor', auto: 'salary'});
       if (rnd() < 0.55) add(y, m, d, 'exp', 'food', between(250, 2600, 10), pick(P.food));
       if (rnd() < 0.3) add(y, m, d, 'exp', 'cafe', between(220, 1300, 10), pick(P.cafe));
-      if (rnd() < 0.45) add(y, m, d, 'exp', 'transport', between(60, 650, 10), pick(P.transport));
+      if (rnd() < 0.14) add(y, m, d, 'exp', 'taxi', between(250, 900, 10), ['Такси', null, null]);
       if (rnd() < 0.06) add(y, m, d, 'exp', 'health', between(300, 2400, 10), P.health[0]);
       if (rnd() < 0.06) add(y, m, d, 'exp', 'fun', between(400, 2200, 50), P.fun[0]);
       if (rnd() < 0.035) add(y, m, d, 'exp', 'clothes', between(1500, 7000, 100), P.clothes[0]);
@@ -1880,6 +2008,13 @@ function makeDemo() {
     sources: [
       {id: 'main', name: 'Основная работа', cat: 'salary', on: true, mode: 'semi', amount1: 48000, day1: 20, amount2: 55000, day2: 5, start: ymd(now)},
       {id: 'tutor', name: 'Репетиторство', cat: 'side', on: true, mode: 'custom', kind: 'interval', every: 7, anchor: ymd(sat), camount: 2500, start: ymd(now)}
+    ],
+    bills: [
+      {id: 'rent', name: 'Аренда квартиры', cat: 'utilities', mode: 'monthly', amount: 26000, day: 1, start: ymd(now)},
+      {id: 'pass', name: 'Проездной', cat: 'pass', mode: 'monthly', amount: 2900, day: 1, start: ymd(now)},
+      {id: 'net', name: 'Телефон и интернет', cat: 'comm', mode: 'monthly', amount: 890, day: 3, start: ymd(now)},
+      {id: 'zhkh', name: 'Коммуналка', cat: 'utilities', mode: 'monthly', amount: 5200, day: 10, start: ymd(now)},
+      {id: 'credit', name: 'Кредит за ноутбук', cat: 'credit', mode: 'monthly', amount: 12000, day: 15, start: ymd(now)}
     ],
     hobbies: [{id: 'photo', name: 'Фотография', limit: 5000}, {id: 'bike', name: 'Велосипед', limit: 3000}]}};
 }
@@ -1912,7 +2047,8 @@ function bind() {
     var key = this.value.trim().toLowerCase();
     document.querySelectorAll('#placeChips .chip-btn').forEach(function (b) { b.classList.toggle('on', b.dataset.place === key); });
   });
-  $('srcAdd').addEventListener('click', function () { openSrcForm(null); });
+  $('srcAdd').addEventListener('click', function () { openSrcForm(null, false); });
+  $('billAdd').addEventListener('click', function () { openSrcForm(null, true); });
   $('srcCancel').addEventListener('click', closeSrcForm);
   $('srcDelete').addEventListener('click', deleteSrc);
   $('srcForm').addEventListener('submit', submitSrc);
@@ -1947,6 +2083,13 @@ function bind() {
     if (ds.goto) { go(ds.goto); return; }
     if (ds.day) { S.selDay = ds.day; renderCal(); return; }
     if (ds.trend) { S.trendSel = ds.trend; renderTrend(); return; }
+    if (ds.daytag) { S.dayTag = ds.daytag; renderDaily(); return; }
+    if (ds.gotoday) {
+      S.selDay = ds.gotoday; S.month = monthKey(ds.gotoday);
+      go('cal');
+      setTimeout(function () { try { $('dayTitle').scrollIntoView({block: 'start', behavior: 'smooth'}); } catch (er) {} }, 60);
+      return;
+    }
     if (ds.id) {
       var tx = D().tx.filter(function (x) { return x.id === ds.id; })[0];
       if (tx) openSheet(tx); return;
@@ -1985,8 +2128,10 @@ function bind() {
       if (wi >= 0) SRCUI.days.splice(wi, 1); else SRCUI.days.push(w);
       renderSrcUI(); return;
     }
-    if (ds.srcEdit) { var src = getSources().filter(function (s) { return s.id === ds.srcEdit; })[0]; if (src) openSrcForm(src); return; }
-    if (ds.srcToggle) { toggleSrc(ds.srcToggle); return; }
+    if (ds.srcEdit) { var src = getSources().filter(function (s) { return s.id === ds.srcEdit; })[0]; if (src) openSrcForm(src, false); return; }
+    if (ds.srcToggle) { toggleSrc(ds.srcToggle, false); return; }
+    if (ds.billEdit) { var bl = getBills().filter(function (s) { return s.id === ds.billEdit; })[0]; if (bl) openSrcForm(bl, true); return; }
+    if (ds.billToggle) { toggleSrc(ds.billToggle, true); return; }
     if (ds.hobbyAdd) { openSheet(null, S.month === monthKey(today()) ? today() : null, {type: 'exp', cat: 'hobby', hobby: ds.hobbyAdd}); return; }
     if (ds.hobbyEdit) { editHobby(ds.hobbyEdit); return; }
   });
