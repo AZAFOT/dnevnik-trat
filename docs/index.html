@@ -124,6 +124,11 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 .heat{display:inline-flex;gap:2px;vertical-align:-2px;margin-right:6px}
 .heat i{width:10px;height:10px;border-radius:3px;background:var(--exp)}
 .dot-inc{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--inc);margin-right:6px}
+.dot-plan{display:inline-block;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--inc);margin-right:6px}
+.plandot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;border:1.5px solid var(--inc);background:var(--surface)}
+.sal-line{background:var(--surface);border-radius:var(--r-md);padding:10px 12px;font-size:13.5px;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.seg.two{grid-auto-flow:row;grid-template-columns:1fr 1fr}
+.kpis>.kpi:last-child:nth-child(odd){grid-column:1/-1}
 
 /* day list */
 .day{display:flex;flex-direction:column;gap:8px}
@@ -272,6 +277,7 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
         <li>Нажмите круглую кнопку <b>+</b> внизу.</li>
         <li>Введите сумму и выберите категорию. Место и GPS необязательны.</li>
         <li>Записывайте и доходы: без них не посчитать норму сбережений.</li>
+        <li>Платят по графику (за день, раз в полмесяца или раз в месяц)? Укажите это во вкладке «Ещё», и зарплата будет записываться сама.</li>
       </ol></div>
       <div class="btn-row"><button class="btn" id="demoOn" type="button">Посмотреть на примере</button></div>
     </div>
@@ -281,12 +287,14 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
       <div class="tot"><span class="lbl">Остаток</span><b id="cBal">—</b></div>
     </div>
     <div id="budgetBox"></div>
+    <div id="salLine"></div>
     <div class="cal" id="calBox">
       <div class="wd"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
       <div class="grid" id="calGrid"></div>
       <div class="cal-legend">
         <span><span class="heat" aria-hidden="true"><i style="opacity:.16"></i><i style="opacity:.32"></i><i style="opacity:.52"></i><i style="opacity:.8"></i></span>чем темнее день, тем больше расходов</span>
         <span><span class="dot-inc" aria-hidden="true"></span>был доход</span>
+        <span id="planLegend" hidden><span class="dot-plan" aria-hidden="true"></span>ожидается выплата</span>
       </div>
     </div>
     <div class="day">
@@ -326,6 +334,40 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
 
   <!-- ЕЩЁ -->
   <section id="v-more" class="view" data-view="more" hidden>
+    <h3 class="sec">Зарплата</h3>
+    <form class="card form" id="salForm" novalidate>
+      <div class="seg two" id="salMode">
+        <button type="button" data-salmode="none">Не учитывать</button>
+        <button type="button" data-salmode="daily">Подневная</button>
+        <button type="button" data-salmode="semi">Раз в полмесяца</button>
+        <button type="button" data-salmode="monthly">Раз в месяц</button>
+      </div>
+      <div class="form" id="salDaily" hidden>
+        <label class="field"><span class="lbl">Оплата за рабочий день</span><input id="salRate" inputmode="decimal" placeholder="Например, 3 000" autocomplete="off"></label>
+        <div class="field"><span class="lbl">Рабочие дни</span><div class="chips" id="salDays"></div></div>
+      </div>
+      <div class="form" id="salSemi" hidden>
+        <div class="row2">
+          <label class="field"><span class="lbl">Аванс, сумма</span><input id="salA1" inputmode="decimal" placeholder="Например, 40 000" autocomplete="off"></label>
+          <label class="field"><span class="lbl">День аванса</span><input id="salD1" type="number" min="1" max="31" inputmode="numeric"></label>
+        </div>
+        <div class="row2">
+          <label class="field"><span class="lbl">Зарплата, сумма</span><input id="salA2" inputmode="decimal" placeholder="Например, 45 000" autocomplete="off"></label>
+          <label class="field"><span class="lbl">День зарплаты</span><input id="salD2" type="number" min="1" max="31" inputmode="numeric"></label>
+        </div>
+      </div>
+      <div class="form" id="salMonthly" hidden>
+        <div class="row2">
+          <label class="field"><span class="lbl">Сумма зарплаты</span><input id="salAmount" inputmode="decimal" placeholder="Например, 85 000" autocomplete="off"></label>
+          <label class="field"><span class="lbl">День выплаты</span><input id="salDay" type="number" min="1" max="31" inputmode="numeric"></label>
+        </div>
+      </div>
+      <label class="field" id="salStartWrap"><span class="lbl">Записывать выплаты начиная с</span><input type="date" id="salStart"></label>
+      <p class="hint" id="salHint" style="margin:0"></p>
+      <p class="err" id="salErr" hidden></p>
+      <button class="btn primary" type="submit">Сохранить график</button>
+    </form>
+
     <h3 class="sec">Настройки</h3>
     <form class="card form" id="setForm" novalidate>
       <label class="field"><span class="lbl">Валюта</span>
@@ -363,6 +405,7 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
         <li><b>Темп трат</b> = (Р / d) / (Б / N). 1,0 — идёте ровно по бюджету, 1,2 — тратите на 20 % быстрее плана.</li>
         <li><b>Прогноз на месяц</b> = Р / d × N — если тратить дальше в том же темпе.</li>
         <li><b>Финансовая подушка</b> = Н / средние расходы за 3 прошлых месяца, в месяцах. Распространённый ориентир — 3–6 месяцев.</li>
+        <li><b>Ожидаемый доход</b> = уже полученные доходы месяца + выплаты по графику зарплаты, которые ещё впереди. <b>Прогноз нормы сбережений</b> = (ожидаемый доход − прогноз расходов) / ожидаемый доход. Для будущего месяца вместо прогноза расходов берётся бюджет.</li>
       </ul>
       <p class="muted">Пример: Д = 80 000, Р = 62 000. Норма сбережений = (80 000 − 62 000) / 80 000 = 0,225 = 22,5 %; коэффициент трат = 62 000 / 80 000 = 0,775.</p>
     </div>
@@ -384,6 +427,7 @@ main{padding-block:4px calc(112px + env(safe-area-inset-bottom,0px))}
   <form class="sheet" id="txForm" novalidate role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <div class="grab" aria-hidden="true"></div>
     <div class="sheet-head"><h2 id="sheetTitle">Новая запись</h2><button type="button" class="btn small ghost" data-close>Закрыть</button></div>
+    <p class="note" id="autoHint" hidden>Записано автоматически по графику зарплаты. Сумму и дату можно поправить. Если запись удалить, по графику она больше не появится.</p>
     <div class="seg" id="typeSeg"><button type="button" data-type="exp">Расход</button><button type="button" data-type="inc">Доход</button></div>
     <div class="field">
       <label class="amount" for="fAmount"><input id="fAmount" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Сумма"><span id="fCur">₽</span></label>
@@ -601,6 +645,11 @@ var Store = {
       }
     } catch (e) { this.why = 'nostorage'; }
     S.loaded = true; setSync('local'); render();
+    setTimeout(ensureSalary, 0);
+  },
+  ready: function () { return this.mode === 'local' || (this.mode === 'cloud' && !!this.txOk && !!this.setOk); },
+  maybeReady: function () {
+    if (this.txOk && this.setOk && !this.readyFired) { this.readyFired = true; setTimeout(ensureSalary, 0); }
   },
   saveLocal: function () {
     try { localStorage.setItem(LOCAL_KEY, JSON.stringify({v: 1, tx: REAL.tx, settings: REAL.settings})); return true; }
@@ -617,12 +666,13 @@ var Store = {
     var timer = setTimeout(function () { if (!confirmed) { setSync('slow'); S.loaded = true; render(); } }, 10000);
     self.txCol.onSnapshot(function (snap) {
       REAL.tx = snap.docs.map(function (d) { return Object.assign({}, d.data(), {id: d.id}); });
-      if (!snap.metadata.fromCache) { confirmed = true; clearTimeout(timer); setSync('cloud'); }
+      if (!snap.metadata.fromCache) { confirmed = true; clearTimeout(timer); setSync('cloud'); if (!self.txOk) { self.txOk = true; self.maybeReady(); } }
       S.loaded = true;
       render();
     }, function () { clearTimeout(timer); S.loaded = true; setSync('error'); render(); });
     self.setRef.onSnapshot(function (snap) {
       REAL.settings = Object.assign({}, DEFAULTS, snap.exists ? snap.data() : {});
+      if (!snap.metadata.fromCache && !self.setOk) { self.setOk = true; self.maybeReady(); }
       render();
     }, function () {});
   },
@@ -706,6 +756,7 @@ function cleanTx(t) {
   if (/^\d{2}:\d{2}$/.test(t.time || '')) o.time = t.time;
   if (t.place) o.place = String(t.place).slice(0, 80);
   if (t.note) o.note = String(t.note).slice(0, 200);
+  if (t.auto === 'salary' && type === 'inc') o.auto = 'salary';
   if (typeof t.lat === 'number' && typeof t.lon === 'number' && isFinite(t.lat) && isFinite(t.lon)) {
     o.lat = t.lat; o.lon = t.lon;
     if (typeof t.acc === 'number' && isFinite(t.acc)) o.acc = Math.round(t.acc);
@@ -780,6 +831,91 @@ function placeAgg(list) {
   });
 }
 
+/* ================= зарплата по графику ================= */
+var SAL_DEFAULT = {mode: 'none', start: '', rate: 0, days: [1, 2, 3, 4, 5], amount: 0, day: 5, amount1: 0, day1: 20, amount2: 0, day2: 5, skip: []};
+function sanitizeSalary(s) {
+  s = (s && typeof s === 'object') ? s : {};
+  var o = Object.assign({}, SAL_DEFAULT, {days: SAL_DEFAULT.days.slice(), skip: []});
+  if (['none', 'daily', 'semi', 'monthly'].indexOf(s.mode) >= 0) o.mode = s.mode;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s.start || '')) o.start = s.start;
+  ['rate', 'amount', 'amount1', 'amount2'].forEach(function (k) { var v = Number(s[k]); if (isFinite(v) && v >= 0) o[k] = Math.round(v * 100) / 100; });
+  ['day', 'day1', 'day2'].forEach(function (k) { var v = Math.round(Number(s[k])); if (v >= 1 && v <= 31) o[k] = v; });
+  if (Array.isArray(s.days)) o.days = s.days.map(Number).filter(function (d) { return d >= 0 && d <= 6 && d === Math.floor(d); });
+  if (Array.isArray(s.skip)) o.skip = s.skip.filter(function (x) { return typeof x === 'string'; }).slice(-500);
+  return o;
+}
+function salCfg() { return sanitizeSalary(D().settings.salary); }
+// все выплаты месяца по графику; id детерминированный, чтобы не было дублей
+function payDates(sal, mk) {
+  var N = daysIn(mk), out = [];
+  function at(d) { return mk + '-' + pad(Math.min(d, N)); }
+  if (sal.mode === 'monthly' && sal.amount > 0) out.push({id: 'sal-' + mk + '-m', date: at(sal.day), amount: sal.amount, note: 'Зарплата'});
+  else if (sal.mode === 'semi') {
+    if (sal.amount1 > 0) out.push({id: 'sal-' + mk + '-a', date: at(sal.day1), amount: sal.amount1, note: 'Аванс'});
+    if (sal.amount2 > 0) out.push({id: 'sal-' + mk + '-b', date: at(sal.day2), amount: sal.amount2, note: 'Зарплата'});
+    out.sort(function (a, b) { return a.date.localeCompare(b.date); });
+  } else if (sal.mode === 'daily' && sal.rate > 0) {
+    for (var d = 1; d <= N; d++) {
+      var ds = mk + '-' + pad(d);
+      if (sal.days.indexOf(parseDay(ds).getDay()) >= 0) out.push({id: 'sal-' + ds + '-d', date: ds, amount: sal.rate, note: 'Оплата за день'});
+    }
+  }
+  return out;
+}
+// ожидаемый доход месяца: получено + выплаты по графику, которые ещё впереди
+function incomeForecast(mk) {
+  var sal = salCfg();
+  if (sal.mode === 'none') return null;
+  var td = today();
+  if (mk < monthKey(td)) return null;
+  var got = totals(monthTx(mk)).inc, ahead = 0;
+  var skip = new Set(sal.skip), have = new Set(D().tx.map(function (t) { return t.id; }));
+  payDates(sal, mk).forEach(function (p) { if (p.date > td && !skip.has(p.id) && !have.has(p.id)) ahead += p.amount; });
+  return got + ahead;
+}
+var salaryBusy = false;
+// дописывает выплаты, дата которых уже наступила; вызывается при запуске, после сохранения графика и при возврате в приложение
+function ensureSalary() {
+  if (DEMO || salaryBusy || !Store.ready()) return;
+  var sal = sanitizeSalary(REAL.settings.salary);
+  if (sal.mode === 'none') return;
+  var td = today(), start = sal.start || td;
+  if (start > td) return;
+  var have = new Set(REAL.tx.map(function (t) { return t.id; })), skip = new Set(sal.skip), todo = [];
+  var mk = monthKey(start), guard = 0;
+  function collect(p) {
+    if (p.date >= start && p.date <= td && !have.has(p.id) && !skip.has(p.id))
+      todo.push({id: p.id, type: 'inc', amount: p.amount, cat: 'salary', date: p.date, note: p.note, auto: 'salary', created: Date.now()});
+  }
+  while (mk <= monthKey(td) && guard++ < 120) { payDates(sal, mk).forEach(collect); mk = shiftMonth(mk, 1); }
+  if (!todo.length) return;
+  if (todo.length > 400) todo = todo.slice(-400);
+  var sum = todo.reduce(function (a, t) { return a + t.amount; }, 0);
+  salaryBusy = true;
+  Store.bulkPut(todo).then(function () {
+    toast(todo.length === 1 ? 'Записано по графику: ' + todo[0].note.toLowerCase() + ' +' + money(sum, true)
+      : 'Записано выплат по графику: ' + todo.length + ' на ' + money(sum, true));
+    render();
+  }).catch(function (e) { toast(writeErr(e)); }).then(function () { salaryBusy = false; });
+}
+function salaryLineHTML(mk) {
+  var sal = salCfg();
+  if (sal.mode === 'none') return '';
+  var td = today(), skip = new Set(sal.skip), nxt = null;
+  for (var k = 0; k < 3 && !nxt; k++) {
+    var l = payDates(sal, shiftMonth(monthKey(td), k));
+    for (var i = 0; i < l.length; i++) if (l[i].date > td && !skip.has(l[i].id)) { nxt = l[i]; break; }
+  }
+  var list = payDates(sal, mk), sum = 0;
+  list.forEach(function (p) { sum += p.amount; });
+  var head = {daily: 'Подневная оплата', semi: 'Зарплата раз в полмесяца', monthly: 'Зарплата раз в месяц'}[sal.mode];
+  var line1 = head + ': по графику ' + money(sum, true) + ' за ' + monthName(mk).toLowerCase();
+  if (sal.mode === 'daily') line1 += ' (' + list.length + ' ' + plural(list.length, 'рабочий день', 'рабочих дня', 'рабочих дней') + ' × ' + money(sal.rate, true) + ')';
+  var line2 = nxt ? 'Следующая выплата: ' + fmtDayShort(nxt.date) + ', ' + nxt.note.toLowerCase() + ' +' + money(nxt.amount, true) : '';
+  return '<div class="sal-line"><span>' + line1 + '</span>' + (line2 ? '<span class="muted">' + line2 + '</span>' : '') +
+    '<button type="button" class="link" data-goto="more">Изменить график</button></div>';
+}
+
 /* ================= статусы ================= */
 function stSavings(v) { if (v == null) return ['na', 'нет доходов']; if (v < 0) return ['bad', 'в минусе']; if (v < 0.2) return ['warn', 'ниже 20 %']; return ['good', 'в норме']; }
 function stExpRatio(v) { if (v == null) return ['na', 'нет доходов']; if (v > 1) return ['bad', 'больше дохода']; if (v > 0.8) return ['warn', 'остаётся мало']; return ['good', 'в норме']; }
@@ -833,6 +969,13 @@ function renderCal() {
   $('cInc').textContent = money(t.inc, true);
   var bal = $('cBal'); bal.textContent = money(t.bal, true); bal.classList.toggle('neg', t.bal < 0);
   $('budgetBox').innerHTML = budgetHTML(m, mk);
+  $('salLine').innerHTML = salaryLineHTML(mk);
+  var sal = salCfg(), plan = new Set();
+  if (sal.mode !== 'none') {
+    var haveIds = new Set(D().tx.map(function (x) { return x.id; })), skipIds = new Set(sal.skip), tdy = today();
+    payDates(sal, mk).forEach(function (pp) { if (pp.date > tdy && !haveIds.has(pp.id) && !skipIds.has(pp.id)) plan.add(pp.date); });
+  }
+  $('planLegend').hidden = !plan.size;
 
   var p = mk.split('-').map(Number), N = daysIn(mk);
   var off = (new Date(p[0], p[1] - 1, 1).getDay() + 6) % 7;
@@ -850,11 +993,11 @@ function renderCal() {
     var key = mk + '-' + pad(d), info = days[key];
     var lv = info && info.exp > 0 && maxExp > 0 ? Math.max(1, Math.ceil(info.exp / maxExp * 4)) : 0;
     var cls = 'cell' + (lv ? ' lv' + lv : '') + (key === td ? ' today' : '') + (key === S.selDay ? ' sel' : '') + (key > td ? ' future' : '');
-    var aria = d + ' ' + MONTHS_GEN[p[1] - 1] + (info ? ': расходы ' + money(info.exp, true) + (info.inc ? ', доходы ' + money(info.inc, true) : '') : ', записей нет');
+    var aria = d + ' ' + MONTHS_GEN[p[1] - 1] + (info ? ': расходы ' + money(info.exp, true) + (info.inc ? ', доходы ' + money(info.inc, true) : '') : ', записей нет') + (plan.has(key) ? ', ожидается выплата' : '');
     html += '<button type="button" class="' + cls + '" data-day="' + key + '" aria-label="' + esc(aria) + '"' + (key === S.selDay ? ' aria-pressed="true"' : '') + '>' +
       '<span class="dn">' + d + '</span>' +
       (info && info.exp > 0 ? '<span class="amt">' + compact(info.exp) + '</span>' : '<span class="amt"></span>') +
-      (info && info.inc > 0 ? '<i class="incdot"></i>' : '') + '</button>';
+      (info && info.inc > 0 ? '<i class="incdot"></i>' : (plan.has(key) ? '<i class="plandot"></i>' : '')) + '</button>';
   }
   var tail = (7 - (off + N) % 7) % 7;
   for (var j = 0; j < tail; j++) html += '<span class="cell blank"></span>';
@@ -925,6 +1068,15 @@ function renderSum() {
     kpi(isCur ? 'Прогноз на месяц' : 'Расходы за месяц', m.forecast == null ? '—' : money(isCur ? m.forecast : m.exp, true), null, isCur ? 'Р / d × N — если тратить в том же темпе' : 'месяц завершён') +
     kpi('В среднем в день', m.perDay == null ? '—' : money(m.perDay, true), null, 'Р / d · средний чек ' + (m.avgCheck == null ? '—' : money(m.avgCheck, true))) +
     kpi('К прошлому месяцу', m.mom == null ? '—' : (m.mom > 0 ? '+' : '') + pct(m.mom), stMom(m.mom), 'Р / Р<sub>пред</sub> − 1 · было ' + money(m.prevExp, true));
+  var incF = incomeForecast(mk);
+  if (incF != null) {
+    var byBudget = m.forecast == null;
+    var expF = byBudget ? (m.budget || null) : (isCur ? m.forecast : m.exp);
+    var rateF = incF > 0 && expF != null ? (incF - expF) / incF : null;
+    $('kpiPace').insertAdjacentHTML('beforeend', kpi('Ожидаемый доход', money(incF, true), rateF == null ? null : stSavings(rateF),
+      (m.inc > 0 ? 'получено ' + money(m.inc, true) + ' + по графику ' + money(incF - m.inc, true) : 'по графику зарплаты') +
+      (rateF != null ? ' · прогноз нормы сбережений ' + pct(rateF, 1) + (byBudget ? ' при расходах = бюджету' : '') : '')));
+  }
 
   // категории
   var byCat = {};
@@ -1062,6 +1214,7 @@ function renderMore() {
     $('sGoal').value = s.goal ? NF.format(s.goal) : '';
     $('sStart').value = s.startBalance ? NF.format(s.startBalance) : '';
   }
+  if (!salDirty) fillSalForm(sanitizeSalary(s.salary));
   var n = REAL.tx.length;
   var info;
   if (DEMO) info = 'Сейчас открыт демо-режим: показаны примеры, ваши записи не тронуты.';
@@ -1075,8 +1228,82 @@ function renderMore() {
     : '<ol><li>Откройте этот адрес в Chrome (Android) или Safari (iPhone).</li><li>Chrome: меню ⋮ → «Добавить на главный экран». Safari: «Поделиться» → «На экран „Домой“».</li><li>При первой записи с GPS разрешите доступ к геолокации.</li></ol><p class="muted">Приложение работает и без интернета; данные хранятся в памяти телефона.</p>';
 }
 
+/* ================= форма графика зарплаты ================= */
+var SALUI = {mode: 'none', days: [1, 2, 3, 4, 5]};
+var salDirty = false;
+var SAL_HINTS = {
+  none: 'Доходы вносятся вручную кнопкой «+».',
+  daily: 'В каждый отмеченный рабочий день доход «Оплата за день» запишется сам. Не работали — откройте эту запись в календаре и удалите: за этот день она больше не появится.',
+  semi: 'Аванс и зарплата запишутся сами в дни выплат. По ТК РФ (ст. 136) зарплату платят не реже чем каждые полмесяца, чаще всего аванс 20–25-го и расчёт 5–10-го.',
+  monthly: 'Зарплата запишется сама в день выплаты. Если такого дня в месяце нет (например, 31-го), запись будет в последний день месяца.'
+};
+function fillSalForm(sal) {
+  SALUI = {mode: sal.mode, days: sal.days.slice()};
+  $('salRate').value = sal.rate ? NF.format(sal.rate) : '';
+  $('salAmount').value = sal.amount ? NF.format(sal.amount) : '';
+  $('salDay').value = sal.day;
+  $('salA1').value = sal.amount1 ? NF.format(sal.amount1) : '';
+  $('salD1').value = sal.day1;
+  $('salA2').value = sal.amount2 ? NF.format(sal.amount2) : '';
+  $('salD2').value = sal.day2;
+  $('salStart').value = sal.start || today();
+  $('salErr').hidden = true;
+  renderSalUI();
+}
+function renderSalUI() {
+  var mode = SALUI.mode;
+  document.querySelectorAll('#salMode button').forEach(function (b) {
+    var on = b.dataset.salmode === mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+  });
+  $('salDaily').hidden = mode !== 'daily';
+  $('salSemi').hidden = mode !== 'semi';
+  $('salMonthly').hidden = mode !== 'monthly';
+  $('salStartWrap').hidden = mode === 'none';
+  var names = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'], order = [1, 2, 3, 4, 5, 6, 0];
+  $('salDays').innerHTML = order.map(function (wd, i) {
+    var on = SALUI.days.indexOf(wd) >= 0;
+    return '<button type="button" class="chip-btn' + (on ? ' on' : '') + '" data-wd="' + wd + '" aria-pressed="' + on + '">' + names[i] + '</button>';
+  }).join('');
+  var st = $('salStart').value;
+  $('salHint').textContent = SAL_HINTS[mode] +
+    (mode !== 'none' && st && st < today() ? ' Выплаты за прошедшие даты начиная с ' + fmtDayShort(st) + ' запишутся сразу после сохранения.' : '');
+}
+function submitSalary(ev) {
+  ev.preventDefault();
+  var o = Object.assign(salCfg(), {mode: SALUI.mode, days: SALUI.days.slice().sort()});
+  var err = '';
+  function amt(id, label) {
+    var v = parseAmount($(id).value);
+    if (!(v > 0)) { err = err || 'Укажите ' + label + ': число больше нуля.'; return 0; }
+    return v;
+  }
+  function day(id, label) {
+    var v = Math.round(Number($(id).value));
+    if (!(v >= 1 && v <= 31)) { err = err || 'День выплаты (' + label + ') — число от 1 до 31.'; return 1; }
+    return v;
+  }
+  if (o.mode === 'daily') { o.rate = amt('salRate', 'оплату за день'); if (!o.days.length) err = err || 'Отметьте хотя бы один рабочий день.'; }
+  if (o.mode === 'monthly') { o.amount = amt('salAmount', 'сумму зарплаты'); o.day = day('salDay', 'зарплата'); }
+  if (o.mode === 'semi') {
+    o.amount1 = amt('salA1', 'сумму аванса'); o.day1 = day('salD1', 'аванс');
+    o.amount2 = amt('salA2', 'сумму зарплаты'); o.day2 = day('salD2', 'зарплата');
+  }
+  var st = $('salStart').value;
+  if (o.mode !== 'none' && !/^\d{4}-\d{2}-\d{2}$/.test(st)) err = err || 'Укажите, с какой даты записывать выплаты.';
+  o.start = st || today();
+  if (err) { $('salErr').textContent = err; $('salErr').hidden = false; return; }
+  $('salErr').hidden = true;
+  salDirty = false;
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  Store.putSettings({salary: o}).then(function () {
+    toast(o.mode === 'none' ? 'Автозапись зарплаты выключена' : (DEMO ? 'График изменён в демо (не сохраняется)' : 'График зарплаты сохранён'));
+    render();
+    ensureSalary();
+  }).catch(function (e) { $('salErr').textContent = writeErr(e); $('salErr').hidden = false; });
+}
+
 /* ================= форма записи ================= */
-var F = {id: null, type: 'exp', cat: null, lat: null, lon: null, acc: null, created: null};
+var F = {id: null, type: 'exp', cat: null, lat: null, lon: null, acc: null, created: null, auto: null};
 function openSheet(tx, presetDate) {
   F.id = tx ? tx.id : null;
   F.type = tx ? tx.type : 'exp';
@@ -1085,6 +1312,8 @@ function openSheet(tx, presetDate) {
   F.lon = tx && typeof tx.lon === 'number' ? tx.lon : null;
   F.acc = tx && typeof tx.acc === 'number' ? tx.acc : null;
   F.created = tx ? tx.created : null;
+  F.auto = tx && tx.auto === 'salary' ? 'salary' : null;
+  $('autoHint').hidden = !F.auto;
   $('fAmount').value = tx ? String(tx.amount).replace('.', ',') : '';
   var date = tx ? tx.date : (presetDate || today());
   $('fDate').value = date;
@@ -1209,7 +1438,8 @@ function submitForm(ev) {
     place: F.type === 'exp' ? $('fPlace').value.trim().slice(0, 80) : null,
     note: $('fNote').value.trim().slice(0, 200),
     lat: F.type === 'exp' ? F.lat : null, lon: F.type === 'exp' ? F.lon : null, acc: F.type === 'exp' ? F.acc : null,
-    created: F.created || Date.now(), updated: Date.now()
+    created: F.created || Date.now(), updated: Date.now(),
+    auto: F.auto && F.type === 'inc' ? 'salary' : null
   });
   var save = $('fSave');
   save.disabled = true; save.textContent = 'Сохраняю…';
@@ -1231,6 +1461,14 @@ function deleteCurrent() {
   }
   delete b.dataset.armed;
   b.disabled = true;
+  if (F.auto === 'salary' && !DEMO) {
+    // запоминаем удалённую выплату, чтобы график не создал её снова
+    var sal = sanitizeSalary(REAL.settings.salary);
+    if (sal.skip.indexOf(F.id) < 0) {
+      sal.skip = sal.skip.concat([F.id]).slice(-500);
+      Store.putSettings({salary: sal}).catch(function (e) { toast(writeErr(e)); });
+    }
+  }
   Store.delTx(F.id).then(function () { closeSheet(); render(); toast('Запись удалена'); })
     .catch(function (e) { $('formErr').textContent = writeErr(e); $('formErr').hidden = false; })
     .then(function () { b.disabled = false; b.textContent = 'Удалить'; });
@@ -1302,9 +1540,10 @@ function importFile(file) {
       var s = {};
       ['budget', 'goal', 'startBalance'].forEach(function (k) { var v = Number(data.settings[k]); if (isFinite(v) && v >= 0) s[k] = v; });
       if (typeof data.settings.currency === 'string') s.currency = data.settings.currency.slice(0, 6);
+      if (data.settings.salary && typeof data.settings.salary === 'object') s.salary = sanitizeSalary(data.settings.salary);
       p = p.then(function () { return Store.putSettings(s); });
     }
-    p.then(function () { render(); toast('Загружено: ' + list.length + ' ' + plural(list.length, 'запись', 'записи', 'записей')); })
+    p.then(function () { salDirty = false; render(); setTimeout(ensureSalary, 0); toast('Загружено: ' + list.length + ' ' + plural(list.length, 'запись', 'записи', 'записей')); })
       .catch(function (e) { toast(writeErr(e)); });
   };
   r.onerror = function () { toast('Не удалось прочитать файл.'); };
@@ -1364,11 +1603,12 @@ function makeDemo() {
       if (rnd() < 0.05) add(y, m, d, 'exp', 'household', between(200, 1800, 10), P.household[0]);
     }
   }
-  return {tx: tx, settings: {currency: '₽', budget: 70000, goal: 300000, startBalance: 120000}};
+  return {tx: tx, settings: {currency: '₽', budget: 70000, goal: 300000, startBalance: 120000,
+    salary: {mode: 'semi', amount1: 48000, day1: 20, amount2: 55000, day2: 5, start: ymd(now)}}};
 }
 
 /* ================= события ================= */
-function go(view) { S.view = view; savePrefs(); render(); window.scrollTo(0, 0); }
+function go(view) { if (view !== 'more') salDirty = false; S.view = view; savePrefs(); render(); window.scrollTo(0, 0); }
 function setMonth(mk) {
   S.month = mk;
   if (monthKey(S.selDay) !== mk) S.selDay = mk === monthKey(today()) ? today() : mk + '-01';
@@ -1382,7 +1622,10 @@ function bind() {
   $('fab').addEventListener('click', function () { openSheet(null, S.view === 'cal' ? S.selDay : null); });
   $('dayAdd').addEventListener('click', function () { openSheet(null, S.selDay); });
   $('demoOn').addEventListener('click', function () { DEMO = makeDemo(); S.month = monthKey(today()); S.selDay = today(); render(); toast('Открыт пример за полгода'); });
-  $('demoOff').addEventListener('click', function () { DEMO = null; render(); toast('Демо закрыто'); });
+  $('demoOff').addEventListener('click', function () { DEMO = null; salDirty = false; render(); toast('Демо закрыто'); ensureSalary(); });
+  $('salForm').addEventListener('submit', submitSalary);
+  $('salForm').addEventListener('input', function (e) { salDirty = true; if (e.target.id === 'salStart') renderSalUI(); });
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { render(); ensureSalary(); } });
   $('txForm').addEventListener('submit', submitForm);
   $('fDelete').addEventListener('click', deleteCurrent);
   $('fGeo').addEventListener('click', locateForm);
@@ -1413,6 +1656,17 @@ function bind() {
       if (tx) openSheet(tx); return;
     }
     if (t.hasAttribute('data-close')) { closeSheet(); return; }
+    if (t.dataset.salmode) {
+      var savedMode = salCfg().mode;
+      SALUI.mode = t.dataset.salmode;
+      if (SALUI.mode !== savedMode) $('salStart').value = today();
+      salDirty = true; $('salErr').hidden = true; renderSalUI(); return;
+    }
+    if (t.dataset.wd) {
+      var w = Number(t.dataset.wd), wi = SALUI.days.indexOf(w);
+      if (wi >= 0) SALUI.days.splice(wi, 1); else SALUI.days.push(w);
+      salDirty = true; renderSalUI(); return;
+    }
     if (t.dataset.type) { F.type = t.dataset.type; renderType(); return; }
     if (t.dataset.cat) { F.cat = t.dataset.cat; renderType(); return; }
     if (t.dataset.place) {
